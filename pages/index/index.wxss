@@ -1,174 +1,177 @@
-/* pages/index/index.wxss */
+/* pages/index/index.wxss — 游戏首页 */
 
 page {
-  background: #f5f0e1;
+  background: #0d1117;
 }
 
-.container {
+.home {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 60rpx 32rpx 40rpx;
-  background: linear-gradient(180deg, #e8f5e9 0%, #f5f0e1 40%);
+  padding: 120rpx 40rpx 60rpx;
+  background: linear-gradient(180deg, #1a0533 0%, #0d1117 40%, #0a1628 100%);
 }
 
-/* ========== 顶部标题 ========== */
+/* ========== 品牌 ========== */
 
-.header {
+.brand {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 48rpx;
+  margin-bottom: 60rpx;
 }
 
 .logo {
-  font-size: 80rpx;
+  font-size: 100rpx;
+  margin-bottom: 16rpx;
+}
+
+.name {
+  font-size: 56rpx;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 12rpx;
+  text-shadow: 0 4rpx 16rpx rgba(124, 77, 255, 0.5);
+}
+
+.sub {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* ========== 主题卡片 ========== */
+
+.theme-card {
+  width: 100%;
+  border-radius: 28rpx;
+  padding: 36rpx;
+  text-align: center;
+  background: linear-gradient(145deg, rgba(124, 77, 255, 0.2), rgba(83, 109, 254, 0.1));
+  border: 2rpx solid rgba(124, 77, 255, 0.35);
+  box-shadow: 0 8rpx 32rpx rgba(124, 77, 255, 0.2);
+  margin-bottom: 48rpx;
+}
+
+.badge {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.4);
+  display: block;
   margin-bottom: 12rpx;
 }
 
 .title {
-  font-size: 52rpx;
-  font-weight: bold;
-  color: #2e7d32;
-  margin-bottom: 8rpx;
-}
-
-.subtitle {
-  font-size: 24rpx;
-  color: #888;
-}
-
-/* ========== 今日主题 ========== */
-
-.today-theme {
-  background: white;
-  border-radius: 24rpx;
-  padding: 32rpx 40rpx;
-  width: 100%;
-  text-align: center;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
-  margin-bottom: 40rpx;
-}
-
-.theme-label {
-  font-size: 24rpx;
-  color: #999;
+  font-size: 40rpx;
+  font-weight: 900;
+  color: #fff;
   display: block;
   margin-bottom: 8rpx;
 }
 
-.theme-name {
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #2e7d32;
-  display: block;
-  margin-bottom: 8rpx;
-}
-
-.theme-desc {
+.desc {
   font-size: 24rpx;
-  color: #888;
+  color: rgba(255, 255, 255, 0.35);
   display: block;
 }
 
-/* ========== 游戏入口 ========== */
+/* ========== 游戏按钮 ========== */
 
-.game-entries {
+.play-btns {
   display: flex;
   gap: 24rpx;
   width: 100%;
-  margin-bottom: 40rpx;
+  margin-bottom: 48rpx;
 }
 
-.entry-card {
+.play {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40rpx 20rpx;
-  border-radius: 24rpx;
-  box-shadow: 0 6rpx 20rpx rgba(0, 0, 0, 0.12);
+  padding: 44rpx 20rpx;
+  border-radius: 28rpx;
 }
 
-.entry-card:active {
-  transform: scale(0.96);
+.play:active {
+  transform: scale(0.95);
 }
 
-.entry-card.main {
-  background: linear-gradient(135deg, #66bb6a, #43a047);
+.main {
+  background: linear-gradient(135deg, #7c4dff, #536dfe);
+  box-shadow: 0 8rpx 24rpx rgba(124, 77, 255, 0.4);
 }
 
-.entry-card.daily {
-  background: linear-gradient(135deg, #ff9800, #f57c00);
+.daily {
+  background: linear-gradient(135deg, #ff6d00, #ff9100);
+  box-shadow: 0 8rpx 24rpx rgba(255, 109, 0, 0.4);
 }
 
-.entry-icon {
-  font-size: 56rpx;
+.icon {
+  font-size: 60rpx;
   margin-bottom: 12rpx;
 }
 
-.entry-title {
+.play .title {
   font-size: 32rpx;
-  font-weight: bold;
-  color: white;
-  margin-bottom: 4rpx;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 8rpx;
 }
 
-.entry-desc {
+.play .sub {
   font-size: 22rpx;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.7);
 }
 
-/* ========== 底部功能 ========== */
+/* ========== 底部 ========== */
 
-.bottom-actions {
+.bottom {
   display: flex;
   gap: 24rpx;
   width: 100%;
-  margin-bottom: 32rpx;
+  margin-bottom: 40rpx;
 }
 
-.action-btn {
+.item {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 28rpx 16rpx;
-  background: white;
-  border-radius: 20rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.06);
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2rpx solid rgba(255, 255, 255, 0.08);
 }
 
-.action-btn:active {
-  transform: scale(0.96);
+.item:active {
+  transform: scale(0.95);
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.action-icon {
+.item .icon {
   font-size: 44rpx;
   margin-bottom: 8rpx;
 }
 
-.action-text {
+.item .text {
   font-size: 26rpx;
-  color: #333;
   font-weight: bold;
+  color: rgba(255, 255, 255, 0.7);
   margin-bottom: 4rpx;
 }
 
-.action-count {
-  font-size: 20rpx;
-  color: #999;
+.item .num {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.3);
 }
 
-/* ========== 统计栏 ========== */
+/* ========== 统计 ========== */
 
-.stats-bar {
+.stats {
   display: flex;
-  justify-content: space-around;
-  width: 100%;
-  padding: 20rpx 0;
+  justify-content: center;
+  gap: 28rpx;
   font-size: 22rpx;
-  color: #aaa;
+  color: rgba(255, 255, 255, 0.2);
 }

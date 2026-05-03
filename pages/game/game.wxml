@@ -1,136 +1,109 @@
 <!--pages/game/game.wxml-->
-<view class="game-container">
-  <!-- 顶部栏 -->
-  <view class="header">
-    <view class="back-btn" bindtap="onBackHome">←</view>
-    <view class="theme-info">
-      <text class="theme-name">{{themeName}}</text>
-      <text class="level-tag">第{{currentLevel}}关</text>
+<view class="game">
+  <!-- 顶部信息（极简） -->
+  <view class="top-bar">
+    <view class="back" bindtap="onBackHome">✕</view>
+    <view class="info-center">
+      <text class="theme">{{themeName}}</text>
+      <text class="level">第{{currentLevel}}关</text>
     </view>
-    <view class="timer">{{formattedTime}}</view>
+    <view class="timer">{{formatTime(elapsedTime)}}</text>
   </view>
 
-  <!-- 进度条 -->
-  <view class="progress-bar">
-    <view class="progress-fill" style="width: {{progress * 100}}%"></view>
-    <text class="progress-text">{{eliminatedCount}}/{{totalCards}}</text>
+  <!-- 游戏牌区 -->
+  <view class="board">
+    <view
+      wx:for="{{cards}}"
+      wx:key="id"
+      class="card {{item.status === 2 ? 'active' : ''}} {{item.status === 1 ? 'covered' : ''}} {{item.highlighted ? 'glow' : ''}} {{item.animating ? 'animating' : ''}}"
+      style="
+        left: {{item.screenPos.x}}px;
+        top: {{item.screenPos.y}}px;
+        z-index: {{100 + item.layer * 20 + item.row * 4 + item.col}};
+        transform: rotate({{item.rotation}}deg);
+      "
+      data-id="{{item.id}}"
+      bindtouchstart="onTouchStart"
+      bindtouchend="onTouchEnd"
+    >
+      <image src="/assets/images/plants/plant_{{item.type}}.png" mode="aspectFit" />
+      <view wx:if="{{item.status === 1}}" class="shade"></view>
+    </view>
   </view>
 
-  <!-- 游戏区域 -->
-  <view class="game-area">
-    <view class="cards-container">
-      <view
-        wx:for="{{cards}}"
-        wx:key="id"
-        class="card {{item.status === 2 ? 'active' : ''}} {{item.highlighted ? 'highlighted' : ''}}"
-        style="
-          left: {{item.screenPos.x}}px;
-          top: {{item.screenPos.y}}px;
-          z-index: {{100 + item.layer * 10 + item.row * 5 + item.col}};
-          transform: rotate({{item.rotation}}deg) scale({{item.scale}});
-          opacity: {{item.status === 0 ? 0 : 1}};
-        "
-        data-id="{{item.id}}"
-        bindtouchstart="onTouchStart"
-        bindtouchend="onTouchEnd"
-      >
-        <image
-          class="card-image"
-          src="https://plant.yg-crystal.com/lglz-game/cards/plant_{{item.type}}.png"
-          mode="aspectFit"
-        />
+  <!-- 底部收集栏 -->
+  <view class="tray">
+    <view class="tray-label">收集栏</text>
+    <view class="tray-slots">
+      <view wx:for="{{7}}" wx:key="index" class="slot {{item.trayType ? 'filled' : ''}}">
+        <image wx:if="{{item.trayType}}" src="/assets/images/plants/plant_{{item.trayType}}.png" mode="aspectFit" />
       </view>
     </view>
+  </view>
+
+  <!-- 连击特效 -->
+  <view wx:if="{{showCombo}}" class="combo">
+    <text class="combo-num">{{comboCount}}</text>
+    <text class="combo-text">连消</text>
   </view>
 
   <!-- 道具栏 -->
-  <view class="props-bar">
-    <view class="prop-item" bindtap="onUseItem" data-type="magnify">
-      <text class="prop-icon">🔍</text>
-      <text class="prop-name">放大镜</text>
+  <view class="tools">
+    <view class="tool" bindtap="onUseItem" data-type="magnify">
+      <text class="tool-icon">🔍</text>
+      <text class="tool-name">提示</text>
     </view>
-    <view class="prop-item" bindtap="onUseItem" data-type="herbicide">
-      <text class="prop-icon">🧪</text>
-      <text class="prop-name">除草剂</text>
+    <view class="tool" bindtap="onUseItem" data-type="shuffle">
+      <text class="tool-icon">🔀</text>
+      <text class="tool-name">洗牌</text>
     </view>
-    <view class="prop-item" bindtap="onUseItem" data-type="shuffle">
-      <text class="prop-icon">🔄</text>
-      <text class="prop-name">洗牌</text>
-    </view>
-    <view class="prop-item" bindtap="onUseItem" data-type="revive">
-      <text class="prop-icon">💚</text>
-      <text class="prop-name">复活</text>
-    </view>
-  </view>
-
-  <!-- 连击提示 -->
-  <view wx:if="{{comboCount > 1}}" class="combo-tip">
-    <text class="combo-text">{{comboCount}} 连击！🔥</text>
-  </view>
-
-  <!-- 失败弹窗 -->
-  <view wx:if="{{showFailModal}}" class="modal-overlay" catchtouchmove="stopProp">
-    <view class="modal fail-modal">
-      <text class="modal-title">{{failMsg}}</text>
-      <text class="modal-sub">还差 {{totalCards - eliminatedCount}} 株植物</text>
-      <view class="modal-buttons">
-        <button class="modal-btn primary" bindtap="onUseItem" data-type="revive">
-          💚 复活
-        </button>
-        <button class="modal-btn secondary" bindtap="onRestart">
-          🔄 重新开始
-        </button>
-      </view>
-      <button class="modal-btn share" open-type="share">
-        📤 分享求助
-      </button>
+    <view class="tool" bindtap="onUseItem" data-type="herbicide">
+      <text class="tool-icon">💣</text>
+      <text class="tool-name">移除</text>
     </view>
   </view>
 
   <!-- 通关弹窗 -->
-  <view wx:if="{{showPassModal}}" class="modal-overlay" catchtouchmove="stopProp">
-    <view class="modal pass-modal">
-      <text class="modal-title">🎉 入门了！</text>
-      <view class="pass-info">
-        <text class="pass-time">用时：{{passTime}}</text>
-        <text class="pass-combo">最高连击：{{maxCombo}}</text>
-      </view>
-      <view wx:if="{{getCard}}" class="card-reward">
-        <text class="reward-label">获得植物卡片：</text>
-        <view class="reward-card">
-          <text class="reward-name">{{getCard.plant}}</text>
-          <text class="reward-rarity {{getCard.rarity === 3 ? 'legendary' : getCard.rarity === 2 ? 'rare' : ''}}">
-            {{getCard.rarity === 3 ? '🌟 传说' : getCard.rarity === 2 ? '💎 稀有' : '⚪ 普通'}}
-          </text>
+  <view wx:if="{{showPassModal}}" class="overlay" catchtouchmove="stopProp">
+    <view class="modal pass">
+      <text class="modal-emoji">🎉</text>
+      <text class="modal-title">通关！</text>
+      <view class="stats">
+        <view class="stat">
+          <text class="val">{{passTime}}</text>
+          <text class="lbl">用时</text>
+        </view>
+        <view class="stat">
+          <text class="val">{{maxCombo}}</text>
+          <text class="lbl">连消</text>
         </view>
       </view>
-      <view class="modal-buttons">
-        <button class="modal-btn primary" bindtap="onRestart">
-          🎮 再来一局
-        </button>
-        <button class="modal-btn secondary" bindtap="onBackHome">
-          🏠 回花园
-        </button>
+      <view wx:if="{{getCard}}" class="reward">
+        <text class="reward-title">获得植物</text>
+        <view class="reward-card {{getCard.rarity === 3 ? 'legendary' : getCard.rarity === 2 ? 'rare' : ''}}">
+          <text class="name">{{getCard.plant}}</text>
+          <text class="tag">{{getCard.rarity === 3 ? '🌟 传说' : getCard.rarity === 2 ? '💎 稀有' : '普通'}}</text>
+        </view>
       </view>
-      <button class="modal-btn share" open-type="share">
-        📤 分享成就
-      </button>
+      <view class="btns">
+        <view class="btn primary" bindtap="onRestart">再来一局</view>
+        <view class="btn ghost" bindtap="onBackHome">回首页</view>
+      </view>
+      <button class="share" open-type="share">分享给好友</button>
     </view>
   </view>
 
-  <!-- 广告弹窗 -->
-  <view wx:if="{{showItemModal}}" class="modal-overlay" catchtouchmove="stopProp">
-    <view class="modal ad-modal">
-      <text class="modal-title">观看广告获得道具</text>
-      <text class="modal-sub">30 秒广告，道具立即生效</text>
-      <view class="modal-buttons">
-        <button class="modal-btn primary" bindtap="confirmWatchAd">
-          📺 看广告
-        </button>
-        <button class="modal-btn secondary" bindtap="onCancelItem">
-          取消
-        </button>
+  <!-- 失败弹窗 -->
+  <view wx:if="{{showFailModal}}" class="overlay" catchtouchmove="stopProp">
+    <view class="modal fail">
+      <text class="modal-emoji">😭</text>
+      <text class="modal-title">{{failMsg}}</text>
+      <text class="modal-sub">还差 {{totalCards - eliminatedCount}} 株</text>
+      <view class="btns">
+        <view class="btn primary" bindtap="onRestart">重新来</view>
+        <view class="btn ghost" bindtap="onBackHome">回首页</view>
       </view>
+      <button class="share" open-type="share">分享求助</button>
     </view>
   </view>
 </view>
