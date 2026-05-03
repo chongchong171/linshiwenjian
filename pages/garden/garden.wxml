@@ -1,0 +1,28 @@
+<!--pages/garden/garden.wxml-->
+<view class="container">
+  <view class="header">
+    <text class="title">🌻 我的花园</text>
+    <text class="count">已收集 {{garden.length}} 株植物</text>
+  </view>
+
+  <view wx:if="{{garden.length === 0}}" class="empty">
+    <text class="empty-icon">🌱</text>
+    <text class="empty-text">花园还是空的</text>
+    <text class="empty-hint">玩游戏收集植物吧！</text>
+  </view>
+
+  <view wx:else class="garden-grid">
+    <view
+      wx:for="{{garden}}"
+      wx:key="id"
+      class="plant-card {{item.rarity === 3 ? 'legendary' : item.rarity === 2 ? 'rare' : ''}}"
+      bindtap="onViewPlant"
+      data-plant="{{item.name}}"
+    >
+      <text class="plant-icon">🌿</text>
+      <text class="plant-name">{{item.name}}</text>
+      <text class="plant-rarity" wx:if="{{item.rarity === 3}}">🌟</text>
+      <text class="plant-rarity" wx:elif="{{item.rarity === 2}}">💎</text>
+    </view>
+  </view>
+</view>

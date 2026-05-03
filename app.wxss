@@ -1,0 +1,17 @@
+/* app.wxss - 全局样式 */
+
+page {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 28rpx;
+  color: #333;
+  background: #f5f0e1;
+  box-sizing: border-box;
+}
+
+view, text, image, button {
+  box-sizing: border-box;
+}
+
+button::after {
+  border: none;
+}

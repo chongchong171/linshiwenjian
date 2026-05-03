@@ -1,0 +1,51 @@
+<!--pages/index/index.wxml-->
+<view class="container">
+  <!-- 顶部标题 -->
+  <view class="header">
+    <text class="logo">🌿</text>
+    <text class="title">绿了个植</text>
+    <text class="subtitle">滑动消除 · 每日主题 · 收集植物</text>
+  </view>
+
+  <!-- 今日主题 -->
+  <view class="today-theme">
+    <text class="theme-label">📅 今日主题</text>
+    <text class="theme-name">{{themeName}}</text>
+    <text class="theme-desc">{{themeDesc}}</text>
+  </view>
+
+  <!-- 游戏入口 -->
+  <view class="game-entries">
+    <view class="entry-card main" bindtap="onStartGame">
+      <text class="entry-icon">🎮</text>
+      <text class="entry-title">开始游戏</text>
+      <text class="entry-desc">第一关 · 入门</text>
+    </view>
+    <view class="entry-card daily" bindtap="onStartDaily">
+      <text class="entry-icon">⚡</text>
+      <text class="entry-title">每日挑战</text>
+      <text class="entry-desc">第二关 · 地狱</text>
+    </view>
+  </view>
+
+  <!-- 底部功能 -->
+  <view class="bottom-actions">
+    <view class="action-btn" bindtap="onGoGarden">
+      <text class="action-icon">🌻</text>
+      <text class="action-text">我的花园</text>
+      <text class="action-count">{{gardenCount}} 株</text>
+    </view>
+    <view class="action-btn" bindtap="onGoRank">
+      <text class="action-icon">🏆</text>
+      <text class="action-text">排行榜</text>
+      <text class="action-count">冲冲冲</text>
+    </view>
+  </view>
+
+  <!-- 统计 -->
+  <view class="stats-bar">
+    <text>玩了 {{stats.totalGames}} 局</text>
+    <text>通关 {{stats.totalPass}} 次</text>
+    <text>消除 {{stats.totalPlants}} 株</text>
+  </view>
+</view>

@@ -1,0 +1,174 @@
+/* pages/index/index.wxss */
+
+page {
+  background: #f5f0e1;
+}
+
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 32rpx 40rpx;
+  background: linear-gradient(180deg, #e8f5e9 0%, #f5f0e1 40%);
+}
+
+/* ========== 顶部标题 ========== */
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 48rpx;
+}
+
+.logo {
+  font-size: 80rpx;
+  margin-bottom: 12rpx;
+}
+
+.title {
+  font-size: 52rpx;
+  font-weight: bold;
+  color: #2e7d32;
+  margin-bottom: 8rpx;
+}
+
+.subtitle {
+  font-size: 24rpx;
+  color: #888;
+}
+
+/* ========== 今日主题 ========== */
+
+.today-theme {
+  background: white;
+  border-radius: 24rpx;
+  padding: 32rpx 40rpx;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+  margin-bottom: 40rpx;
+}
+
+.theme-label {
+  font-size: 24rpx;
+  color: #999;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.theme-name {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #2e7d32;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.theme-desc {
+  font-size: 24rpx;
+  color: #888;
+  display: block;
+}
+
+/* ========== 游戏入口 ========== */
+
+.game-entries {
+  display: flex;
+  gap: 24rpx;
+  width: 100%;
+  margin-bottom: 40rpx;
+}
+
+.entry-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx 20rpx;
+  border-radius: 24rpx;
+  box-shadow: 0 6rpx 20rpx rgba(0, 0, 0, 0.12);
+}
+
+.entry-card:active {
+  transform: scale(0.96);
+}
+
+.entry-card.main {
+  background: linear-gradient(135deg, #66bb6a, #43a047);
+}
+
+.entry-card.daily {
+  background: linear-gradient(135deg, #ff9800, #f57c00);
+}
+
+.entry-icon {
+  font-size: 56rpx;
+  margin-bottom: 12rpx;
+}
+
+.entry-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 4rpx;
+}
+
+.entry-desc {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ========== 底部功能 ========== */
+
+.bottom-actions {
+  display: flex;
+  gap: 24rpx;
+  width: 100%;
+  margin-bottom: 32rpx;
+}
+
+.action-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28rpx 16rpx;
+  background: white;
+  border-radius: 20rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+.action-btn:active {
+  transform: scale(0.96);
+}
+
+.action-icon {
+  font-size: 44rpx;
+  margin-bottom: 8rpx;
+}
+
+.action-text {
+  font-size: 26rpx;
+  color: #333;
+  font-weight: bold;
+  margin-bottom: 4rpx;
+}
+
+.action-count {
+  font-size: 20rpx;
+  color: #999;
+}
+
+/* ========== 统计栏 ========== */
+
+.stats-bar {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  padding: 20rpx 0;
+  font-size: 22rpx;
+  color: #aaa;
+}

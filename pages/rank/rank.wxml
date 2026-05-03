@@ -1,0 +1,29 @@
+<!--pages/rank/rank.wxml-->
+<view class="container">
+  <view class="header">
+    <text class="title">🏆 排行榜</text>
+    <text class="date">{{date}}</text>
+  </view>
+
+  <view class="rank-list">
+    <view
+      wx:for="{{ranks}}"
+      wx:key="rank"
+      class="rank-item {{item.rank <= 3 ? 'top' : ''}}"
+    >
+      <text class="rank-num {{item.rank === 1 ? 'gold' : item.rank === 2 ? 'silver' : item.rank === 3 ? 'bronze' : ''}}">
+        {{item.rank}}
+      </text>
+      <view class="rank-info">
+        <text class="rank-name">{{item.name}}</text>
+        <text class="rank-time">{{item.time}}</text>
+      </view>
+      <text class="rank-props">道具 ×{{item.props}}</text>
+    </view>
+  </view>
+
+  <view wx:if="{{myRank}}" class="my-rank">
+    <text class="my-rank-label">你的排名</text>
+    <text class="my-rank-value">第 {{myRank}} 名</text>
+  </view>
+</view>
