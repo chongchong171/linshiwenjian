@@ -17,6 +17,10 @@ Page({
     plants: [],
     visiblePlants: [],
     
+    // 槽位数据（底部7格）
+    slots: [],
+    slotCount: 7,
+    
     // UI 状态
     showGameOver: false,
     showLevelComplete: false,
@@ -36,11 +40,12 @@ Page({
     isSwiping: false,
     
     // 布局参数（rpx 单位）
-    plantSize: 80,      // 植物大小
-    plantGap: 5,        // 植物间距
-    layerOffset: 15,    // 每层偏移量（实现堆叠效果）
-    gridOffsetX: 40,    // 网格 X 偏移
-    gridOffsetY: 120    // 网格 Y 偏移
+    plantSize: 70,      // 植物大小
+    plantGap: 8,        // 植物间距
+    layerOffset: 10,    // 每层偏移量（实现堆叠效果）
+    gridOffsetX: 20,    // 网格 X 偏移
+    gridOffsetY: 140,   // 网格 Y 偏移
+    slotHeight: 140     // 槽位区域高度
   },
 
   gameManager: null,
@@ -83,7 +88,8 @@ Page({
         isGameOver: false,
         isLevelComplete: false,
         showGameOver: false,
-        showLevelComplete: false
+        showLevelComplete: false,
+        slots: []  // 清空槽位
       });
       
       // 更新植物数据
@@ -174,7 +180,7 @@ Page({
     
     // 计算屏幕位置（实现堆叠效果）
     // 每层向上偏移 layerOffset，形成堆叠
-    const x = gridOffsetX + col * (plantSize + plantGap) - layer * layerOffset;
+    const x = gridOffsetX + col * (plantSize + plantGap);
     const y = gridOffsetY + row * (plantSize + plantGap) - layer * layerOffset;
     
     // z-index 确保上层植物显示在下层之上
@@ -203,7 +209,7 @@ Page({
     const touch = event.touches[0];
     const plant = this.getPlantAtPosition(touch.clientX, touch.clientY);
     
-    if (plant) {
+    if (plant && plant.visible) {
       this.setData({
         touchStartPos: { x: touch.clientX, y: touch.clientY },
         isSwiping: true,
@@ -226,7 +232,7 @@ Page({
     const touch = event.touches[0];
     const plant = this.getPlantAtPosition(touch.clientX, touch.clientY);
     
-    if (plant) {
+    if (plant && plant.visible) {
       const currentPath = [...this.data.currentSwipePath];
       if (!currentPath.find(p => p.id === plant.id)) {
         currentPath.push(plant);

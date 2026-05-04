@@ -9,15 +9,15 @@
   overflow: hidden;
 }
 
-/* 顶部信息栏 */
+/* 顶部信息栏 - 修复文字可见性 */
 .top-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20rpx 30rpx;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 0 0 30rpx 30rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+  padding: 16rpx 24rpx;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 0 0 20rpx 20rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.15);
 }
 
 .level-info {
@@ -27,13 +27,14 @@
 }
 
 .level-name {
-  font-size: 28rpx;
+  font-size: 26rpx;
   font-weight: bold;
   color: #333;
+  text-shadow: none;
 }
 
 .level-id {
-  font-size: 24rpx;
+  font-size: 22rpx;
   color: #666;
 }
 
@@ -44,12 +45,12 @@
 }
 
 .score-label, .moves-label {
-  font-size: 24rpx;
+  font-size: 22rpx;
   color: #666;
 }
 
 .score-value, .moves-value {
-  font-size: 36rpx;
+  font-size: 32rpx;
   font-weight: bold;
   color: #4CAF50;
 }
@@ -58,9 +59,9 @@
 .game-area {
   flex: 1;
   position: relative;
-  margin: 20rpx;
+  margin: 16rpx;
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 30rpx;
+  border-radius: 20rpx;
   overflow: auto;
 }
 
@@ -78,14 +79,14 @@
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 500rpx;
+  min-height: 400rpx;
 }
 
-/* 植物单元格 */
+/* 植物单元格 - 修复尺寸 */
 .plant-cell {
   position: absolute;
-  width: 160rpx;  /* 80px * 2 = 160rpx */
-  height: 160rpx; /* 80px * 2 = 160rpx */
+  width: 140rpx;  /* 70px * 2 = 140rpx */
+  height: 140rpx; /* 70px * 2 = 140rpx */
   transition: all 0.3s ease;
 }
 
@@ -103,11 +104,11 @@
   width: 100%;
   height: 100%;
   background: white;
-  border-radius: 20rpx;
+  border-radius: 16rpx;
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.25);
   border: 2rpx solid rgba(0, 0, 0, 0.1);
 }
 
@@ -115,65 +116,109 @@
 .plant-cell[style*="z-index: 1"] .plant-inner,
 .plant-cell[style*="z-index: 2"] .plant-inner,
 .plant-cell[style*="z-index: 3"] .plant-inner {
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.35);
 }
 
 .plant-icon {
-  font-size: 80rpx;
+  font-size: 70rpx;
 }
 
-/* 底部信息栏 */
-.bottom-bar {
+/* 底部槽位区域（7 格） */
+.slot-area {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 16rpx 24rpx;
+  border-radius: 20rpx 20rpx 0 0;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.15);
+}
+
+.slot-container {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 12rpx;
+  margin-bottom: 12rpx;
+}
+
+.slot-item {
+  width: 80rpx;
+  height: 80rpx;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 12rpx;
+  display: flex;
+  justify-content: center;
   align-items: center;
-  padding: 20rpx 30rpx;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 30rpx 30rpx 0 0;
-  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.1);
+  border: 2rpx solid rgba(0, 0, 0, 0.15);
+}
+
+.slot-item.filled {
+  background: white;
+  border-color: #4CAF50;
+  box-shadow: 0 4rpx 12rpx rgba(76, 175, 80, 0.3);
+}
+
+.slot-inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.slot-icon {
+  font-size: 50rpx;
 }
 
 .remaining-info {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
+  padding: 0 8rpx;
 }
 
 .remaining-label {
-  font-size: 24rpx;
+  font-size: 22rpx;
   color: #666;
 }
 
 .remaining-value {
-  font-size: 36rpx;
+  font-size: 32rpx;
   font-weight: bold;
   color: #FF5722;
 }
 
-.powerup-bar {
+/* 道具栏 - 固定底部，更醒目 */
+.powerup-bar-fixed {
   display: flex;
-  gap: 20rpx;
+  justify-content: space-around;
+  align-items: center;
+  padding: 12rpx 24rpx;
+  background: rgba(255, 255, 255, 0.98);
+  border-top: 2rpx solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.15);
 }
 
 .powerup-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10rpx;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 20rpx;
-  min-width: 80rpx;
+  padding: 12rpx 16rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16rpx;
+  min-width: 90rpx;
+  box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.4);
 }
 
 .powerup-icon {
-  font-size: 40rpx;
-  margin-bottom: 5rpx;
+  font-size: 44rpx;
+  margin-bottom: 4rpx;
 }
 
 .powerup-count {
-  font-size: 24rpx;
+  font-size: 26rpx;
   font-weight: bold;
-  color: #333;
+  color: white;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4rpx 12rpx;
+  border-radius: 20rpx;
 }
 
 /* 弹窗样式 */
@@ -183,7 +228,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;

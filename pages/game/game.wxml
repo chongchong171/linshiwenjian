@@ -40,29 +40,41 @@
     </view>
   </view>
 
-  <!-- 底部信息栏 -->
-  <view class="bottom-bar">
+  <!-- 底部槽位区域（7 格） -->
+  <view class="slot-area">
+    <view class="slot-container">
+      <view 
+        wx:for="{{slots}}" 
+        wx:key="id"
+        class="slot-item {{item.type ? 'filled' : 'empty'}}">
+        <view class="slot-inner" wx:if="{{item.type}}">
+          <text class="slot-icon">{{item.type === 1 ? '🌹' : item.type === 2 ? '🌷' : item.type === 3 ? '🌻' : item.type === 4 ? '🌵' : item.type === 5 ? '🌿' : item.type === 6 ? '🍃' : item.type === 7 ? '🎃' : item.type === 8 ? '🌸' : item.type === 9 ? '💮' : '🌲'}}</text>
+        </view>
+      </view>
+    </view>
     <view class="remaining-info">
       <text class="remaining-label">剩余</text>
       <text class="remaining-value">{{remainingCount}}</text>
     </view>
-    <view class="powerup-bar">
-      <view class="powerup-item" bindtap="onUsePowerUp" data-type="magnifier">
-        <text class="powerup-icon">🔍</text>
-        <text class="powerup-count">{{powerUps.magnifier}}</text>
-      </view>
-      <view class="powerup-item" bindtap="onUsePowerUp" data-type="weedkiller">
-        <text class="powerup-icon">🧪</text>
-        <text class="powerup-count">{{powerUps.weedkiller}}</text>
-      </view>
-      <view class="powerup-item" bindtap="onUsePowerUp" data-type="shuffle">
-        <text class="powerup-icon">🔀</text>
-        <text class="powerup-count">{{powerUps.shuffle}}</text>
-      </view>
-      <view class="powerup-item" bindtap="onUsePowerUp" data-type="revive">
-        <text class="powerup-icon">💚</text>
-        <text class="powerup-count">{{powerUps.revive}}</text>
-      </view>
+  </view>
+
+  <!-- 道具栏 -->
+  <view class="powerup-bar-fixed">
+    <view class="powerup-item" bindtap="onUsePowerUp" data-type="magnifier">
+      <text class="powerup-icon">🔍</text>
+      <text class="powerup-count">{{powerUps.magnifier}}</text>
+    </view>
+    <view class="powerup-item" bindtap="onUsePowerUp" data-type="weedkiller">
+      <text class="powerup-icon">🧪</text>
+      <text class="powerup-count">{{powerUps.weedkiller}}</text>
+    </view>
+    <view class="powerup-item" bindtap="onUsePowerUp" data-type="shuffle">
+      <text class="powerup-icon">🔀</text>
+      <text class="powerup-count">{{powerUps.shuffle}}</text>
+    </view>
+    <view class="powerup-item" bindtap="onUsePowerUp" data-type="revive">
+      <text class="powerup-icon">💚</text>
+      <text class="powerup-count">{{powerUps.revive}}</text>
     </view>
   </view>
 
