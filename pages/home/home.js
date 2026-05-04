@@ -61,5 +61,18 @@ Page({
     if (this.data.videoSrc.startsWith('http')) {
       this.setData({ videoSrc: '/static/videos/home-intro.mp4' });
     }
+  },
+
+  /**
+   * 视频元数据加载完成
+   */
+  onVideoReady(e) {
+    const { width, height, duration } = e.detail;
+    console.log('视频信息:', { width, height, duration });
+    console.log('视频分辨率:', width + 'x' + height);
+    
+    if (width < 720 || height < 720) {
+      console.warn('⚠️ 视频分辨率较低，建议至少 720p');
+    }
   }
 });
