@@ -15,15 +15,21 @@ class PlantStackManager {
 
   /**
    * 初始化多层布局
+   * 每层植物数量递减，实现堆叠效果
    * @param {Object} config 关卡配置
    */
   initLayers(config) {
     this.layers = [];
     
+    const baseRows = config.gridSize.rows;
+    const baseCols = config.gridSize.cols;
+    
+    // 从底层到顶层创建
     for (let layerIndex = 0; layerIndex < config.layers; layerIndex++) {
       const layer = [];
-      const rows = config.gridSize.rows - layerIndex;
-      const cols = config.gridSize.cols - layerIndex;
+      // 每层比上一层少 2 行 2 列，形成堆叠效果
+      const rows = Math.max(1, baseRows - layerIndex * 2);
+      const cols = Math.max(1, baseCols - layerIndex * 2);
       
       for (let row = 0; row < rows; row++) {
         const rowPlants = [];
@@ -147,23 +153,30 @@ class PlantStackManager {
 
   /**
    * 检查植物是否被遮挡
+   * 核心逻辑：上层植物遮挡下层植物
+   * 借鉴羊了个羊教程：第一层某位置能否拾取，取决于第二层四个对应位置是否有牌
    * @param {Object} plant 植物配置
    * @returns {boolean} 是否被遮挡
    */
   isBlocked(plant) {
     const { layer, row, col } = plant.position;
     
-    // 检查上层是否有植物遮挡
+    // 最底层不会被遮挡
+    if (layer === 0) return false;
+    
+    // 检查所有上层是否有植物遮挡
     for (let upperLayer = layer - 1; upperLayer >= 0; upperLayer--) {
       if (!this.layers[upperLayer]) continue;
       
       // 上层植物遮挡范围是当前植物位置的 2x2 区域
+      // 因为上层比下层小，所以需要将下层坐标映射到上层
       const upperRow = Math.floor(row / 2);
       const upperCol = Math.floor(col / 2);
       
+      // 检查上层对应位置是否有植物
       if (this.isValidPosition(upperLayer, upperRow, upperCol)) {
         const upperPlant = this.layers[upperLayer][upperRow][upperCol];
-        if (upperPlant && upperPlant.state !== PlantState.ELIMINATED) {
+        if (upperPlant && upperPlant.type !== PlantType.NONE && upperPlant.state !== PlantState.ELIMINATED) {
           return true;
         }
       }
@@ -197,7 +210,7 @@ class PlantStackManager {
     plant.state = PlantState.ELIMINATED;
     plant.visible = false;
     
-    // 刷新所有植物状态
+    // 刷新所有植物状态（因为消除后可能有新的植物变为可见）
     this.refreshAllPlants();
   }
 

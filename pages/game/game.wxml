@@ -26,7 +26,7 @@
       <text>加载中...</text>
     </view>
     
-    <!-- 植物网格 -->
+    <!-- 植物网格 - 实现多层堆叠效果 -->
     <view class="plant-grid" wx:else>
       <view 
         wx:for="{{plants}}" 

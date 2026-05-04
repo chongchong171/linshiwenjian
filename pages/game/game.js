@@ -35,11 +35,12 @@ Page({
     currentSwipePath: [],
     isSwiping: false,
     
-    // 布局参数
-    plantSize: 60,
-    plantGap: 10,
-    gridOffsetX: 30,
-    gridOffsetY: 100
+    // 布局参数（rpx 单位）
+    plantSize: 80,      // 植物大小
+    plantGap: 5,        // 植物间距
+    layerOffset: 15,    // 每层偏移量（实现堆叠效果）
+    gridOffsetX: 40,    // 网格 X 偏移
+    gridOffsetY: 120    // 网格 Y 偏移
   },
 
   gameManager: null,
@@ -165,22 +166,31 @@ Page({
 
   /**
    * 植物数据转换
+   * 关键：计算堆叠位置，实现多层堆叠效果
    */
   plantToData(plant) {
-    const { plantSize, plantGap } = this.data;
+    const { plantSize, plantGap, layerOffset, gridOffsetX, gridOffsetY } = this.data;
+    const { layer, row, col } = plant.position;
+    
+    // 计算屏幕位置（实现堆叠效果）
+    // 每层向上偏移 layerOffset，形成堆叠
+    const x = gridOffsetX + col * (plantSize + plantGap) - layer * layerOffset;
+    const y = gridOffsetY + row * (plantSize + plantGap) - layer * layerOffset;
+    
+    // z-index 确保上层植物显示在下层之上
+    const zIndex = layer * 1000 + row * 10 + col;
     
     return {
       id: `${plant.position.layer}-${plant.position.row}-${plant.position.col}`,
       type: plant.type,
-      layer: plant.position.layer,
-      row: plant.position.row,
-      col: plant.position.col,
+      layer: layer,
+      row: row,
+      col: col,
       visible: plant.visible,
       state: plant.state,
-      // 计算屏幕位置
-      x: plant.position.col * (plantSize + plantGap) + plant.position.layer * 15,
-      y: plant.position.row * (plantSize + plantGap) + plant.position.layer * 15,
-      zIndex: plant.position.layer * 100 + plant.position.row * 10 + plant.position.col
+      x: x,
+      y: y,
+      zIndex: zIndex
     };
   },
 
@@ -247,18 +257,20 @@ Page({
 
   /**
    * 获取指定位置的植物
-   * 根据触摸坐标计算对应的植物
+   * 根据触摸坐标计算对应的植物（从上层到下层查找）
    */
   getPlantAtPosition(x, y) {
-    const { plantSize, plantGap, gridOffsetX, gridOffsetY } = this.data;
+    const { plantSize, gridOffsetX, gridOffsetY } = this.data;
     const { plants } = this.data;
     
-    // 遍历所有可见植物，找到触摸位置对应的植物
-    for (const plant of plants) {
+    // 从上层到下层查找（优先匹配上层植物）
+    const sortedPlants = [...plants].sort((a, b) => b.zIndex - a.zIndex);
+    
+    for (const plant of sortedPlants) {
       if (!plant.visible || plant.state === PlantState.ELIMINATED) continue;
       
-      const plantLeft = gridOffsetX + plant.x;
-      const plantTop = gridOffsetY + plant.y;
+      const plantLeft = plant.x;
+      const plantTop = plant.y;
       const plantRight = plantLeft + plantSize;
       const plantBottom = plantTop + plantSize;
       
