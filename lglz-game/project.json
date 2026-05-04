@@ -1,0 +1,27 @@
+{
+  "version": "3.8.0",
+  "name": "绿了个植",
+  "appid": "wx286acd0921cd1cae",
+  "scenes": [
+    {
+      "name": "GameScene",
+      "path": "scenes/GameScene.scene"
+    }
+  ],
+  "packages": {
+    "cocos-service": {
+      "config": {
+        "general": {
+          "appId": "wx286acd0921cd1cae",
+          "apiKey": "",
+          "engineVersion": "3.8.0"
+        }
+      }
+    }
+  },
+  "fbx": {
+    "legacyFbxImporter": {
+      "visible": true
+    }
+  }
+}
