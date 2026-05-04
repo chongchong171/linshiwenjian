@@ -1,5 +1,20 @@
 <!--pages/index/index.wxml-->
 <view class="home">
+  <!-- 视频背景 -->
+  <video
+    id="homeVideo"
+    class="bg-video"
+    src="/static/videos/home-intro.mp4"
+    autoplay="true"
+    loop="true"
+    muted="true"
+    object-fit="cover"
+    show-center-play-btn="false"
+    show-play-btn="false"
+    enable-progress-gesture="false"
+    binderror="onVideoError"
+  />
+
   <!-- 品牌 -->
   <view class="brand">
     <text class="logo">🌿</text>

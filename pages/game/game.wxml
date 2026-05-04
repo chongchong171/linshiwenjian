@@ -26,7 +26,7 @@
       <text>加载中...</text>
     </view>
     
-    <!-- 植物网格 - 实现多层堆叠效果 -->
+    <!-- 植物网格 -->
     <view class="plant-grid" wx:else>
       <view 
         wx:for="{{plants}}" 
@@ -59,7 +59,7 @@
   </view>
 
   <!-- 道具栏 -->
-  <view class="powerup-bar-fixed">
+  <view class="powerup-bar">
     <view class="powerup-item" bindtap="onUsePowerUp" data-type="magnifier">
       <text class="powerup-icon">🔍</text>
       <text class="powerup-count">{{powerUps.magnifier}}</text>

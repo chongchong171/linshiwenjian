@@ -15,16 +15,13 @@ Page({
     
     // 植物数据
     plants: [],
-    visiblePlants: [],
     
     // 槽位数据（底部7格）
     slots: [],
-    slotCount: 7,
     
     // UI 状态
     showGameOver: false,
     showLevelComplete: false,
-    hintPlants: [],
     
     // 道具数量
     powerUps: {
@@ -34,34 +31,19 @@ Page({
       revive: 1
     },
     
-    // 触摸相关
-    touchStartPos: null,
-    currentSwipePath: [],
-    isSwiping: false,
-    
-    // 布局参数（px 单位）
+    // 布局参数
     plantSize: 60,      // 植物大小 (px)
-    plantGap: 6,        // 植物间距 (px)
-    layerOffset: 8,     // 每层偏移量（实现堆叠效果）(px)
-    gridOffsetX: 15,    // 网格 X 偏移 (px)
-    gridOffsetY: 100,   // 网格 Y 偏移 (px)
-    slotHeight: 120     // 槽位区域高度 (px)
+    plantGap: 5,        // 植物间距 (px)
+    layerOffset: 12,    // 每层偏移量 (px) - 实现堆叠效果
+    gridOffsetX: 25,    // 网格 X 偏移 (px)
+    gridOffsetY: 110    // 网格 Y 偏移 (px)
   },
 
   gameManager: null,
-  systemInfo: null,
 
-  onLoad(options) {
-    // 获取系统信息
-    this.systemInfo = wx.getSystemInfoSync();
-    
-    // 初始化游戏管理器
+  onLoad() {
     this.gameManager = new GameManager();
-    
-    // 设置回调函数
     this.setupCallbacks();
-    
-    // 初始化游戏
     this.initGame();
   },
 
@@ -72,15 +54,12 @@ Page({
     console.log('开始初始化游戏...');
     
     try {
-      // 初始化游戏
       this.gameManager.init();
       
-      // 获取关卡配置
       const levelConfig = this.gameManager.levelManager.getCurrentLevel();
       
       console.log('关卡配置:', levelConfig);
       
-      // 更新 UI
       this.setData({
         currentLevel: levelConfig.id,
         themeName: levelConfig.name,
@@ -91,12 +70,10 @@ Page({
         isLevelComplete: false,
         showGameOver: false,
         showLevelComplete: false,
-        slots: []  // 清空槽位
+        slots: []
       });
       
-      // 更新植物数据
       this.updatePlantData();
-      
       console.log('游戏初始化完成');
     } catch (error) {
       console.error('初始化游戏失败:', error);
@@ -109,29 +86,17 @@ Page({
    */
   setupCallbacks() {
     this.gameManager.setCallbacks({
-      onScoreChange: (score) => {
-        this.setData({ score });
-      },
-      onMovesChange: (moves) => {
-        this.setData({ moves });
-      },
+      onScoreChange: (score) => this.setData({ score }),
+      onMovesChange: (moves) => this.setData({ moves }),
       onGameOver: (score) => {
-        this.setData({ 
-          isGameOver: true,
-          showGameOver: true 
-        });
+        this.setData({ isGameOver: true, showGameOver: true });
         wx.showToast({ title: '游戏结束', icon: 'none' });
       },
       onLevelComplete: (score) => {
-        this.setData({ 
-          isLevelComplete: true,
-          showLevelComplete: true 
-        });
+        this.setData({ isLevelComplete: true, showLevelComplete: true });
         wx.showToast({ title: '关卡完成！', icon: 'success' });
       },
-      onPlantEliminated: (plants) => {
-        this.updatePlantData();
-      }
+      onPlantEliminated: () => this.updatePlantData()
     });
   },
 
@@ -139,12 +104,10 @@ Page({
    * 更新植物数据
    */
   updatePlantData() {
-    const visiblePlants = this.gameManager.stackManager.getVisiblePlants();
     const allPlants = this.getAllPlants();
     
     this.setData({
       plants: allPlants,
-      visiblePlants: visiblePlants.map(p => this.plantToData(p)),
       remainingCount: this.gameManager.getRemainingCount()
     });
   },
@@ -172,15 +135,13 @@ Page({
   },
 
   /**
-   * 植物数据转换
-   * 关键：计算堆叠位置，实现多层堆叠效果
+   * 植物数据转换 - 实现堆叠效果
    */
   plantToData(plant) {
     const { plantSize, plantGap, layerOffset, gridOffsetX, gridOffsetY } = this.data;
     const { layer, row, col } = plant.position;
     
-    // 计算屏幕位置（实现堆叠效果）
-    // 每层向上偏移 layerOffset，形成堆叠
+    // 计算屏幕位置 - 每层向上偏移实现堆叠
     const x = gridOffsetX + col * (plantSize + plantGap);
     const y = gridOffsetY + row * (plantSize + plantGap) - layer * layerOffset;
     
@@ -208,18 +169,10 @@ Page({
     if (this.data.isGameOver || this.data.isLevelComplete) return;
     
     const touch = event.touches[0];
-    console.log('触摸开始:', touch.clientX, touch.clientY);
-    
     const plant = this.getPlantAtPosition(touch.clientX, touch.clientY);
     
     if (plant && plant.visible) {
       console.log('选中植物:', plant.id, plant.type);
-      
-      this.setData({
-        touchStartPos: { x: touch.clientX, y: touch.clientY },
-        isSwiping: true,
-        currentSwipePath: [plant]
-      });
       
       const managerPlant = this.data.plants.find(p => p.id === plant.id);
       if (managerPlant) {
@@ -232,21 +185,15 @@ Page({
    * 触摸移动
    */
   onTouchMove(event) {
-    if (!this.data.isSwiping) return;
+    if (this.data.isGameOver || this.data.isLevelComplete) return;
     
     const touch = event.touches[0];
     const plant = this.getPlantAtPosition(touch.clientX, touch.clientY);
     
     if (plant && plant.visible) {
-      const currentPath = [...this.data.currentSwipePath];
-      if (!currentPath.find(p => p.id === plant.id)) {
-        currentPath.push(plant);
-        this.setData({ currentSwipePath: currentPath });
-        
-        const managerPlant = this.data.plants.find(p => p.id === plant.id);
-        if (managerPlant) {
-          this.gameManager.moveSwipe(managerPlant);
-        }
+      const managerPlant = this.data.plants.find(p => p.id === plant.id);
+      if (managerPlant) {
+        this.gameManager.moveSwipe(managerPlant);
       }
     }
   },
@@ -254,27 +201,20 @@ Page({
   /**
    * 触摸结束
    */
-  onTouchEnd(event) {
-    if (!this.data.isSwiping) return;
+  onTouchEnd() {
+    if (this.data.isGameOver || this.data.isLevelComplete) return;
     
     this.gameManager.endSwipe();
-    
-    this.setData({
-      isSwiping: false,
-      currentSwipePath: [],
-      touchStartPos: null
-    });
   },
 
   /**
    * 获取指定位置的植物
-   * 根据触摸坐标计算对应的植物（从上层到下层查找）
    */
   getPlantAtPosition(x, y) {
     const { plantSize, gridOffsetX, gridOffsetY } = this.data;
     const { plants } = this.data;
     
-    // 从上层到下层查找（优先匹配上层植物）
+    // 从上层到下层查找
     const sortedPlants = [...plants].sort((a, b) => b.zIndex - a.zIndex);
     
     for (const plant of sortedPlants) {
@@ -285,7 +225,6 @@ Page({
       const plantRight = plantLeft + plantSize;
       const plantBottom = plantTop + plantSize;
       
-      // 检查触摸点是否在植物范围内
       if (x >= plantLeft && x <= plantRight && y >= plantTop && y <= plantBottom) {
         return plant;
       }
@@ -305,14 +244,10 @@ Page({
     const success = this.gameManager.usePowerUp(type);
     
     if (success) {
-      // 更新道具数量
       const powerUps = { ...this.data.powerUps };
       powerUps[type]--;
       this.setData({ powerUps });
-      
-      // 更新植物数据
       this.updatePlantData();
-      
       wx.showToast({ title: '道具使用成功', icon: 'success' });
     } else {
       wx.showToast({ title: '道具数量不足', icon: 'none' });
@@ -323,11 +258,7 @@ Page({
    * 重新开始
    */
   onRestart() {
-    this.setData({
-      showGameOver: false,
-      showLevelComplete: false
-    });
-    
+    this.setData({ showGameOver: false, showLevelComplete: false });
     this.initGame();
   },
 
@@ -342,10 +273,7 @@ Page({
       return;
     }
     
-    this.setData({
-      showLevelComplete: false
-    });
-    
+    this.setData({ showLevelComplete: false });
     this.gameManager.init(nextLevel);
     this.updatePlantData();
   },
@@ -361,7 +289,6 @@ Page({
   },
 
   onUnload() {
-    // 清理资源
     this.gameManager = null;
   }
 });
