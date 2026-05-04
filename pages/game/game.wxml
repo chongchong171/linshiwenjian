@@ -22,27 +22,20 @@
     bindtouchmove="onTouchMove" 
     bindtouchend="onTouchEnd">
     
+    <view class="game-message" wx:if="{{plants.length === 0}}">
+      <text>加载中...</text>
+    </view>
+    
     <!-- 植物网格 -->
-    <view class="plant-grid">
+    <view class="plant-grid" wx:else>
       <view 
         wx:for="{{plants}}" 
         wx:key="id"
         class="plant-cell {{item.visible ? 'visible' : 'hidden'}}"
-        data-plant-id="{{item.id}}"
         style="left: {{item.x}}px; top: {{item.y}}px; z-index: {{item.zIndex}}">
         <view class="plant-inner">
           <text class="plant-icon">{{item.type === 1 ? '🌹' : item.type === 2 ? '🌷' : item.type === 3 ? '🌻' : item.type === 4 ? '🌵' : item.type === 5 ? '🌿' : item.type === 6 ? '🍃' : item.type === 7 ? '🎃' : item.type === 8 ? '🌸' : item.type === 9 ? '💮' : '🌲'}}</text>
         </view>
-      </view>
-    </view>
-    
-    <!-- 滑动路径显示 -->
-    <view class="swipe-path" wx:if="{{currentSwipePath.length > 0}}">
-      <view 
-        wx:for="{{currentSwipePath}}" 
-        wx:key="id"
-        class="swipe-point"
-        style="left: {{item.x + 30}}px; top: {{item.y + 30}}px">
       </view>
     </view>
   </view>

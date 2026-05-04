@@ -1,0 +1,33 @@
+<!--pages/home/home.wxml-->
+<view class="home-container">
+  <!-- 视频背景区域 -->
+  <view class="video-container">
+    <!-- 后续替换为你的动态视频 -->
+    <video 
+      class="bg-video"
+      src="/static/videos/home-intro.mp4"
+      autoplay 
+      loop 
+      muted
+      objectFit="cover"
+    />
+  </view>
+
+  <!-- 标题区域 -->
+  <view class="title-area">
+    <text class="game-title">绿了个植</text>
+    <text class="game-subtitle">滑动消除 · 植物狂欢</text>
+  </view>
+
+  <!-- 开始游戏按钮 -->
+  <view class="start-area">
+    <button class="start-btn" bindtap="onStartGame">
+      <text class="btn-text">开始游戏</text>
+    </button>
+  </view>
+
+  <!-- 底部提示 -->
+  <view class="footer-area">
+    <text class="footer-text">滑动相邻相同植物即可消除</text>
+  </view>
+</view>
