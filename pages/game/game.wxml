@@ -25,16 +25,14 @@
     <!-- 植物网格 -->
     <view class="plant-grid">
       <view 
-        wx:for="{{visiblePlants}}" 
+        wx:for="{{plants}}" 
         wx:key="id"
         class="plant-cell {{item.visible ? 'visible' : 'hidden'}}"
         data-plant-id="{{item.id}}"
-        style="left: {{item.col * 60 + item.layer * 10}}px; top: {{item.row * 60 + item.layer * 10}}px; z-index: {{item.layer * 100 + item.row * 10 + item.col}}">
-        <image 
-          class="plant-image" 
-          src="/static/plants/plant-{{item.type}}.png" 
-          mode="aspectFit"
-        />
+        style="left: {{item.x}}px; top: {{item.y}}px; z-index: {{item.zIndex}}">
+        <view class="plant-inner">
+          <text class="plant-icon">{{item.type === 1 ? '🌹' : item.type === 2 ? '🌷' : item.type === 3 ? '🌻' : item.type === 4 ? '🌵' : item.type === 5 ? '🌿' : item.type === 6 ? '🍃' : item.type === 7 ? '🎃' : item.type === 8 ? '🌸' : item.type === 9 ? '💮' : '🌲'}}</text>
+        </view>
       </view>
     </view>
     
@@ -44,7 +42,7 @@
         wx:for="{{currentSwipePath}}" 
         wx:key="id"
         class="swipe-point"
-        style="left: {{item.col * 60 + item.layer * 10 + 30}}px; top: {{item.row * 60 + item.layer * 10 + 30}}px">
+        style="left: {{item.x + 30}}px; top: {{item.y + 30}}px">
       </view>
     </view>
   </view>
@@ -57,19 +55,19 @@
     </view>
     <view class="powerup-bar">
       <view class="powerup-item" bindtap="onUsePowerUp" data-type="magnifier">
-        <image class="powerup-icon" src="/static/icons/magnifier.png" />
+        <text class="powerup-icon">🔍</text>
         <text class="powerup-count">{{powerUps.magnifier}}</text>
       </view>
       <view class="powerup-item" bindtap="onUsePowerUp" data-type="weedkiller">
-        <image class="powerup-icon" src="/static/icons/weedkiller.png" />
+        <text class="powerup-icon">🧪</text>
         <text class="powerup-count">{{powerUps.weedkiller}}</text>
       </view>
       <view class="powerup-item" bindtap="onUsePowerUp" data-type="shuffle">
-        <image class="powerup-icon" src="/static/icons/shuffle.png" />
+        <text class="powerup-icon">🔀</text>
         <text class="powerup-count">{{powerUps.shuffle}}</text>
       </view>
       <view class="powerup-item" bindtap="onUsePowerUp" data-type="revive">
-        <image class="powerup-icon" src="/static/icons/revive.png" />
+        <text class="powerup-icon">💚</text>
         <text class="powerup-count">{{powerUps.revive}}</text>
       </view>
     </view>

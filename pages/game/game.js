@@ -20,7 +20,6 @@ Page({
     // UI 状态
     showGameOver: false,
     showLevelComplete: false,
-    showPowerUpMenu: false,
     hintPlants: [],
     
     // 道具数量
@@ -34,12 +33,22 @@ Page({
     // 触摸相关
     touchStartPos: null,
     currentSwipePath: [],
-    isSwiping: false
+    isSwiping: false,
+    
+    // 布局参数
+    plantSize: 60,
+    plantGap: 10,
+    gridOffsetX: 30,
+    gridOffsetY: 100
   },
 
   gameManager: null,
+  systemInfo: null,
 
   onLoad(options) {
+    // 获取系统信息
+    this.systemInfo = wx.getSystemInfoSync();
+    
     // 初始化游戏管理器
     this.gameManager = new GameManager();
     
@@ -158,6 +167,8 @@ Page({
    * 植物数据转换
    */
   plantToData(plant) {
+    const { plantSize, plantGap } = this.data;
+    
     return {
       id: `${plant.position.layer}-${plant.position.row}-${plant.position.col}`,
       type: plant.type,
@@ -165,7 +176,11 @@ Page({
       row: plant.position.row,
       col: plant.position.col,
       visible: plant.visible,
-      state: plant.state
+      state: plant.state,
+      // 计算屏幕位置
+      x: plant.position.col * (plantSize + plantGap) + plant.position.layer * 15,
+      y: plant.position.row * (plantSize + plantGap) + plant.position.layer * 15,
+      zIndex: plant.position.layer * 100 + plant.position.row * 10 + plant.position.col
     };
   },
 
@@ -185,7 +200,10 @@ Page({
         currentSwipePath: [plant]
       });
       
-      this.gameManager.startSwipe(this.data.plants.find(p => p.id === plant.id));
+      const managerPlant = this.data.plants.find(p => p.id === plant.id);
+      if (managerPlant) {
+        this.gameManager.startSwipe(managerPlant);
+      }
     }
   },
 
@@ -204,7 +222,10 @@ Page({
         currentPath.push(plant);
         this.setData({ currentSwipePath: currentPath });
         
-        this.gameManager.moveSwipe(this.data.plants.find(p => p.id === plant.id));
+        const managerPlant = this.data.plants.find(p => p.id === plant.id);
+        if (managerPlant) {
+          this.gameManager.moveSwipe(managerPlant);
+        }
       }
     }
   },
@@ -226,10 +247,27 @@ Page({
 
   /**
    * 获取指定位置的植物
+   * 根据触摸坐标计算对应的植物
    */
   getPlantAtPosition(x, y) {
-    // TODO: 根据位置查找对应的植物
-    // 这里需要根据实际 UI 布局实现
+    const { plantSize, plantGap, gridOffsetX, gridOffsetY } = this.data;
+    const { plants } = this.data;
+    
+    // 遍历所有可见植物，找到触摸位置对应的植物
+    for (const plant of plants) {
+      if (!plant.visible || plant.state === PlantState.ELIMINATED) continue;
+      
+      const plantLeft = gridOffsetX + plant.x;
+      const plantTop = gridOffsetY + plant.y;
+      const plantRight = plantLeft + plantSize;
+      const plantBottom = plantTop + plantSize;
+      
+      // 检查触摸点是否在植物范围内
+      if (x >= plantLeft && x <= plantRight && y >= plantTop && y <= plantBottom) {
+        return plant;
+      }
+    }
+    
     return null;
   },
 
@@ -254,22 +292,8 @@ Page({
       
       wx.showToast({ title: '道具使用成功', icon: 'success' });
     } else {
-      wx.showToast({ title: '道具使用失败', icon: 'none' });
+      wx.showToast({ title: '道具数量不足', icon: 'none' });
     }
-  },
-
-  /**
-   * 显示道具菜单
-   */
-  onShowPowerUpMenu() {
-    this.setData({ showPowerUpMenu: true });
-  },
-
-  /**
-   * 隐藏道具菜单
-   */
-  onHidePowerUpMenu() {
-    this.setData({ showPowerUpMenu: false });
   },
 
   /**
