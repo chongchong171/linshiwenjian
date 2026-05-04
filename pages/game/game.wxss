@@ -84,8 +84,8 @@
 /* 植物单元格 */
 .plant-cell {
   position: absolute;
-  width: 120rpx;  /* 60px * 2 = 120rpx */
-  height: 120rpx; /* 60px * 2 = 120rpx */
+  width: 120rpx;
+  height: 120rpx;
   transition: all 0.3s ease;
 }
 
@@ -122,7 +122,7 @@
   font-size: 60rpx;
 }
 
-/* 底部槽位区域 */
+/* 底部卡槽区域 */
 .slot-area {
   background: rgba(255, 255, 255, 0.95);
   padding: 16rpx 24rpx;
@@ -284,24 +284,4 @@
 .btn-share {
   background: #FF9800;
   color: white;
-}
-
-/* 动画效果 */
-@keyframes eliminate {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.2);
-    opacity: 0.5;
-  }
-  100% {
-    transform: scale(0);
-    opacity: 0;
-  }
-}
-
-.plant-cell.eliminating {
-  animation: eliminate 0.5s ease-out forwards;
 }

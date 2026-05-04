@@ -1,16 +1,14 @@
 /**
  * 绿了个植 - 游戏管理器
  * 
+ * 严格遵循小蚂蚁教程系列1-4：堆叠拾取 + 随机生成 + 卡槽消除 + 道具
  * 整合所有核心模块，管理游戏主流程
  */
 
 const PlantStackManager = require('./plant-stack-manager');
-const PlantMatchFinder = require('./plant-match-finder');
-const PlantSwipeHandler = require('./plant-swipe-handler');
-const PlantFallManager = require('./plant-fall-manager');
-const PowerUpManager = require('./power-up-manager');
-const LevelManager = require('./level-manager');
+const SlotManager = require('./slot-manager');
 const { PlantType, PlantState, PowerUpType } = require('./plant-types');
+const LevelManager = require('./level-manager');
 
 class GameManager {
   constructor() {
@@ -21,33 +19,21 @@ class GameManager {
       this.onPlantStateChange(plant);
     });
     
-    this.matchFinder = new PlantMatchFinder(this.stackManager);
-    
-    this.swipeHandler = new PlantSwipeHandler(
-      this.stackManager,
-      this.matchFinder,
-      {
-        onElimination: (plants) => this.handleElimination(plants)
-      }
-    );
-    
-    this.fallManager = new PlantFallManager(this.stackManager, {
-      onChainElimination: (plants) => this.handleElimination(plants)
+    this.slotManager = new SlotManager({
+      maxSlots: 7,
+      onSlotChange: (slots) => this.onSlotChange(slots),
+      onElimination: (type, pos) => this.onElimination(type, pos),
+      onGameOver: (reason) => this.onGameOver(reason),
+      onLevelComplete: () => this.onLevelComplete(),
+      onRemainingChange: (count) => this.onRemainingChange(count)
     });
-    
-    this.powerUpManager = new PowerUpManager(
-      this.stackManager,
-      this.matchFinder,
-      {
-        onHintShow: (plants) => this.showHint(plants)
-      }
-    );
     
     // 游戏状态
     this.score = 0;
     this.moves = 0;
     this.isGameOver = false;
     this.isPaused = false;
+    this.remainingCount = 0;
     
     // 回调函数
     this.onScoreChange = null;
@@ -55,6 +41,9 @@ class GameManager {
     this.onGameOver = null;
     this.onLevelComplete = null;
     this.onPlantEliminated = null;
+    this.onSlotChange = null;
+    this.onRemainingChange = null;
+    this.onPlantStateChange = null;
   }
 
   /**
@@ -78,19 +67,30 @@ class GameManager {
       // 初始化堆叠布局
       this.stackManager.initLayers(levelConfig);
       
-      // 随机生成植物类型
-      this.generateRandomPlants(levelConfig);
+      // 随机生成植物类型（保证可通关）
+      this.generatePassablePlants(levelConfig);
       
       // 刷新所有植物状态
       this.stackManager.refreshAllPlants();
+      
+      // 初始化卡槽
+      this.slotManager.init();
       
       // 重置游戏状态
       this.score = 0;
       this.moves = 0;
       this.isGameOver = false;
       this.isPaused = false;
+      this.remainingCount = this.stackManager.getRemainingCount();
       
-      console.log('游戏初始化成功，关卡:', targetLevelId);
+      console.log('游戏初始化成功，关卡:', targetLevelId, '剩余植物:', this.remainingCount);
+      
+      // 触发回调
+      if (this.onScoreChange) this.onScoreChange(this.score);
+      if (this.onMovesChange) this.onMovesChange(this.moves);
+      if (this.onRemainingChange) this.onRemainingChange(this.remainingCount);
+      if (this.onSlotChange) this.onSlotChange([]);
+      
     } catch (error) {
       console.error('游戏初始化失败:', error);
       throw error;
@@ -98,138 +98,293 @@ class GameManager {
   }
 
   /**
-   * 随机生成植物
-   * @param {Object} levelConfig 关卡配置
+   * 随机生成植物（⭐ 教程系列2：保证可通关）
+   * 
+   * 算法：
+   * 1. 统计卡牌总数
+   * 2. 验证总数 % 3 == 0
+   * 3. 随机抽取 N 种类型
+   * 4. 按类型生成，每种 3 张，循环直到凑满总数
+   * 5. 随机打乱序列
+   * 6. 按顺序分配给每个卡牌位置
    */
-  generateRandomPlants(levelConfig) {
-    const layers = this.stackManager.layers;
+  generatePassablePlants(levelConfig) {
+    // 1. 统计卡牌总数
+    const totalCount = this.stackManager.getTotalCount();
+    console.log('卡牌总数:', totalCount);
     
-    for (let layerIndex = 0; layerIndex < layers.length; layerIndex++) {
-      const layer = layers[layerIndex];
-      
+    // 2. 验证总数是否为 3 的倍数
+    if (totalCount % 3 !== 0) {
+      console.warn('警告：卡牌总数不是 3 的倍数，可能无法通关！');
+    }
+    
+    // 3. 随机抽取类型（从可用类型中抽取，数量根据总数决定）
+    const typeCount = Math.min(levelConfig.plantTypes.length, Math.ceil(totalCount / 3));
+    const selectedTypes = this.shuffleArray([...levelConfig.plantTypes]).slice(0, typeCount);
+    console.log('选择的植物类型:', selectedTypes);
+    
+    // 4. 按类型生成，每种 3 张，循环直到凑满总数
+    const typeList = [];
+    let typeIndex = 0;
+    
+    while (typeList.length < totalCount) {
+      const type = selectedTypes[typeIndex % selectedTypes.length];
+      // 每次添加 3 张相同类型
+      typeList.push(type, type, type);
+      typeIndex++;
+    }
+    
+    // 5. 随机打乱序列
+    this.shuffleArray(typeList);
+    console.log('生成的类型序列（前 10 个）:', typeList.slice(0, 10));
+    
+    // 6. 按顺序分配给每个卡牌位置
+    let typeIndex2 = 0;
+    for (let layerIndex = 0; layerIndex < this.stackManager.layers.length; layerIndex++) {
+      const layer = this.stackManager.layers[layerIndex];
       for (let row = 0; row < layer.length; row++) {
         for (let col = 0; col < layer[row].length; col++) {
-          // 随机选择植物类型
-          const randomType = levelConfig.plantTypes[
-            Math.floor(Math.random() * levelConfig.plantTypes.length)
-          ];
-          
-          this.stackManager.setPlantType(layerIndex, row, col, randomType);
+          if (typeIndex2 < typeList.length) {
+            this.stackManager.setPlantType(layerIndex, row, col, typeList[typeIndex2]);
+            typeIndex2++;
+          }
         }
       }
     }
   }
 
   /**
-   * 开始滑动
-   * @param {Object} plant 起始植物
+   * 随机打乱数组（Fisher-Yates 算法）
    */
-  startSwipe(plant) {
-    if (this.isGameOver || this.isPaused) return;
-    
-    this.swipeHandler.startSwipe(plant);
+  shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
   }
 
   /**
-   * 滑动移动
-   * @param {Object} plant 当前植物
+   * 点击植物（教程：拾取卡牌）
+   * @param {Object} plant 植物配置
    */
-  moveSwipe(plant) {
+  clickPlant(plant) {
     if (this.isGameOver || this.isPaused) return;
     
-    this.swipeHandler.moveSwipe(plant);
-  }
-
-  /**
-   * 结束滑动
-   */
-  endSwipe() {
-    if (this.isGameOver || this.isPaused) return;
+    // 检查植物是否可见（可拾取）
+    if (!plant.visible || plant.state === PlantState.ELIMINATED) {
+      console.log('植物不可拾取:', plant.id);
+      return;
+    }
     
-    const action = this.swipeHandler.endSwipe();
+    // 检查卡槽是否已满
+    if (this.slotManager.isFull()) {
+      console.log('卡槽已满，无法拾取');
+      return;
+    }
     
-    if (action.isValid) {
+    // 从堆叠区移除植物
+    this.stackManager.eliminatePlant(plant);
+    
+    // 插入到卡槽
+    const result = this.slotManager.insertPlant({
+      type: plant.type,
+      position: plant.position,
+      id: plant.id
+    });
+    
+    if (result.success) {
       this.moves++;
       if (this.onMovesChange) this.onMovesChange(this.moves);
       
-      // 处理下落
-      this.fallManager.handlePlantFall();
+      // 计算分数
+      const earnedScore = result.eliminated ? 30 : 10;
+      this.score += earnedScore;
+      if (this.onScoreChange) this.onScoreChange(this.score);
       
-      // 检查连锁消除
-      this.fallManager.executeFullFallAndChain(this.matchFinder);
-      
-      // 检查游戏结束
-      this.checkGameOver();
+      console.log('植物拾取成功，插入位置:', result.position, '是否消除:', result.eliminated);
+    } else {
+      console.log('植物拾取失败:', result.reason);
     }
   }
 
   /**
-   * 处理消除
-   * @param {Array} plants 消除的植物列表
+   * 消除回调
    */
-  handleElimination(plants) {
-    // 计算分数
-    const earnedScore = plants.length * 10;
-    this.score += earnedScore;
-    if (this.onScoreChange) this.onScoreChange(this.score);
-    
-    // 触发消除回调
-    if (this.onPlantEliminated) this.onPlantEliminated(plants);
-    
-    // 检查关卡完成
-    if (this.levelManager.checkLevelComplete(this.score)) {
-      if (this.onLevelComplete) this.onLevelComplete(this.score);
+  onElimination(type, pos) {
+    console.log('消除发生，类型:', type, '位置:', pos);
+    if (this.onPlantEliminated) {
+      this.onPlantEliminated(type, pos);
     }
   }
 
   /**
-   * 检查游戏结束
+   * 卡槽变化回调
    */
-  checkGameOver() {
-    // 检查是否还有可消除的植物
-    const hasValidMatch = this.matchFinder.hasValidMatch();
-    
-    // 检查是否还有剩余植物
-    const remainingCount = this.stackManager.getRemainingCount();
-    
-    if (!hasValidMatch && remainingCount > 0) {
-      // 没有可消除的植物，但还有剩余植物，游戏结束
-      this.isGameOver = true;
-      if (this.onGameOver) this.onGameOver(this.score);
-    } else if (remainingCount === 0) {
-      // 所有植物消除完成，游戏胜利
-      this.isGameOver = true;
-      if (this.onLevelComplete) this.onLevelComplete(this.score);
+  onSlotChange(slots) {
+    if (this.onSlotChange) {
+      this.onSlotChange(slots);
     }
   }
 
   /**
-   * 使用道具
-   * @param {string} type 道具类型
-   * @param {Object} plant 目标植物
-   * @returns {boolean} 是否成功
+   * 游戏结束回调
    */
-  usePowerUp(type, plant) {
-    if (this.isGameOver || this.isPaused) return false;
-    
-    return this.powerUpManager.usePowerUp(type, plant);
+  onGameOver(reason) {
+    this.isGameOver = true;
+    console.log('游戏结束，原因:', reason);
+    if (this.onGameOver) {
+      this.onGameOver(reason);
+    }
   }
 
   /**
-   * 显示提示
-   * @param {Array} plants 提示的植物列表
+   * 关卡完成回调
    */
-  showHint(plants) {
-    console.log('提示：可消除的植物对', plants);
-    // TODO: 实现提示 UI
+  onLevelComplete() {
+    this.isGameOver = true;
+    console.log('关卡完成！');
+    if (this.onLevelComplete) {
+      this.onLevelComplete(this.score);
+    }
+  }
+
+  /**
+   * 剩余数量变化回调
+   */
+  onRemainingChange(count) {
+    this.remainingCount = count;
+    if (this.onRemainingChange) {
+      this.onRemainingChange(count);
+    }
   }
 
   /**
    * 植物状态变化回调
-   * @param {Object} plant 植物配置
    */
   onPlantStateChange(plant) {
     // TODO: 更新 UI
+  }
+
+  /**
+   * 使用道具
+   */
+  usePowerUp(type) {
+    if (this.isGameOver || this.isPaused) return false;
+    
+    switch (type) {
+      case PowerUpType.MAGNIFIER:
+        return this.useMagnifier();
+      case PowerUpType.WEEDKILLER:
+        return this.useWeedkiller();
+      case PowerUpType.SHUFFLE:
+        return this.useShuffle();
+      case PowerUpType.REVIVE:
+        return this.useRevive();
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * 道具：移出三张牌
+   */
+  useMagnifier() {
+    // TODO: 实现移出三张牌逻辑
+    console.log('使用道具：移出三张牌');
+    return true;
+  }
+
+  /**
+   * 道具：撤回一步
+   */
+  useWeedkiller() {
+    // TODO: 实现撤回一步逻辑
+    console.log('使用道具：撤回一步');
+    return true;
+  }
+
+  /**
+   * 道具：随机打乱
+   */
+  useShuffle() {
+    // TODO: 实现随机打乱逻辑
+    console.log('使用道具：随机打乱');
+    return true;
+  }
+
+  /**
+   * 道具：复活
+   */
+  useRevive() {
+    // TODO: 实现复活逻辑
+    console.log('使用道具：复活');
+    return true;
+  }
+
+  /**
+   * 获取所有植物数据（用于 UI 渲染）
+   */
+  getAllPlants() {
+    const layers = this.stackManager.layers;
+    const allPlants = [];
+    
+    for (let layerIndex = 0; layerIndex < layers.length; layerIndex++) {
+      const layer = layers[layerIndex];
+      for (let row = 0; row < layer.length; row++) {
+        for (let col = 0; col < layer[row].length; col++) {
+          const plant = layer[row][col];
+          if (plant.type !== PlantType.NONE) {
+            allPlants.push(this.plantToData(plant));
+          }
+        }
+      }
+    }
+    
+    return allPlants;
+  }
+
+  /**
+   * 植物数据转换
+   */
+  plantToData(plant) {
+    const plantSize = 60;
+    const plantGap = 5;
+    const layerOffset = 12;
+    const gridOffsetX = 25;
+    const gridOffsetY = 110;
+    
+    const { layer, row, col } = plant.position;
+    const x = gridOffsetX + col * (plantSize + plantGap);
+    const y = gridOffsetY + row * (plantSize + plantGap) - layer * layerOffset;
+    const zIndex = (layer + 1) * 100;
+    
+    return {
+      id: `${layer}-${row}-${col}`,
+      type: plant.type,
+      layer: layer,
+      row: row,
+      col: col,
+      visible: plant.visible,
+      state: plant.state,
+      x: x,
+      y: y,
+      zIndex: zIndex
+    };
+  }
+
+  /**
+   * 设置回调函数
+   */
+  setCallbacks(callbacks) {
+    this.onScoreChange = callbacks.onScoreChange || null;
+    this.onMovesChange = callbacks.onMovesChange || null;
+    this.onGameOver = callbacks.onGameOver || null;
+    this.onLevelComplete = callbacks.onLevelComplete || null;
+    this.onPlantEliminated = callbacks.onPlantEliminated || null;
+    this.onSlotChange = callbacks.onSlotChange || null;
+    this.onRemainingChange = callbacks.onRemainingChange || null;
+    this.onPlantStateChange = callbacks.onPlantStateChange || null;
   }
 
   /**
@@ -251,41 +406,6 @@ class GameManager {
    */
   reset() {
     this.init();
-  }
-
-  /**
-   * 获取分数
-   * @returns {number} 分数
-   */
-  getScore() {
-    return this.score;
-  }
-
-  /**
-   * 获取步数
-   * @returns {number} 步数
-   */
-  getMoves() {
-    return this.moves;
-  }
-
-  /**
-   * 获取剩余植物数量
-   * @returns {number} 剩余数量
-   */
-  getRemainingCount() {
-    return this.stackManager.getRemainingCount();
-  }
-
-  /**
-   * 设置回调函数
-   */
-  setCallbacks(callbacks) {
-    this.onScoreChange = callbacks.onScoreChange || null;
-    this.onMovesChange = callbacks.onMovesChange || null;
-    this.onGameOver = callbacks.onGameOver || null;
-    this.onLevelComplete = callbacks.onLevelComplete || null;
-    this.onPlantEliminated = callbacks.onPlantEliminated || null;
   }
 }
 

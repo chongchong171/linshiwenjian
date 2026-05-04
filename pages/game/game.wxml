@@ -17,11 +17,7 @@
   </view>
 
   <!-- 游戏区域 -->
-  <view class="game-area" 
-    bindtouchstart="onTouchStart" 
-    bindtouchmove="onTouchMove" 
-    bindtouchend="onTouchEnd">
-    
+  <view class="game-area">
     <view class="game-message" wx:if="{{plants.length === 0}}">
       <text>加载中...</text>
     </view>
@@ -32,6 +28,8 @@
         wx:for="{{plants}}" 
         wx:key="id"
         class="plant-cell {{item.visible ? 'visible' : 'hidden'}}"
+        data-plant-id="{{item.id}}"
+        bindtap="onTapPlant"
         style="left: {{item.x}}px; top: {{item.y}}px; z-index: {{item.zIndex}}">
         <view class="plant-inner">
           <text class="plant-icon">{{item.type === 1 ? '🌹' : item.type === 2 ? '🌷' : item.type === 3 ? '🌻' : item.type === 4 ? '🌵' : item.type === 5 ? '🌿' : item.type === 6 ? '🍃' : item.type === 7 ? '🎃' : item.type === 8 ? '🌸' : item.type === 9 ? '💮' : '🌲'}}</text>
@@ -40,15 +38,15 @@
     </view>
   </view>
 
-  <!-- 底部槽位区域（7 格） -->
+  <!-- 底部卡槽区域（7 格） -->
   <view class="slot-area">
     <view class="slot-container">
       <view 
-        wx:for="{{slots}}" 
-        wx:key="id"
-        class="slot-item {{item.type ? 'filled' : 'empty'}}">
-        <view class="slot-inner" wx:if="{{item.type}}">
-          <text class="slot-icon">{{item.type === 1 ? '🌹' : item.type === 2 ? '🌷' : item.type === 3 ? '🌻' : item.type === 4 ? '🌵' : item.type === 5 ? '🌿' : item.type === 6 ? '🍃' : item.type === 7 ? '🎃' : item.type === 8 ? '🌸' : item.type === 9 ? '💮' : '🌲'}}</text>
+        wx:for="{{slotCount}}" 
+        wx:key="index"
+        class="slot-item {{index < slots.length ? 'filled' : 'empty'}}">
+        <view class="slot-inner" wx:if="{{index < slots.length}}">
+          <text class="slot-icon">{{slots[index].type === 1 ? '🌹' : slots[index].type === 2 ? '🌷' : slots[index].type === 3 ? '🌻' : slots[index].type === 4 ? '🌵' : slots[index].type === 5 ? '🌿' : slots[index].type === 6 ? '🍃' : slots[index].type === 7 ? '🎃' : slots[index].type === 8 ? '🌸' : slots[index].type === 9 ? '💮' : '🌲'}}</text>
         </view>
       </view>
     </view>
