@@ -5,26 +5,22 @@
   height: 100vh;
   position: relative;
   overflow: hidden;
+  background: #1a1a2e;
 }
 
 /* 视频背景 */
-.video-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
 .bg-video {
   width: 100%;
   height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 /* 标题区域 */
 .title-area {
   position: absolute;
-  top: 20%;
+  top: 15%;
   left: 0;
   width: 100%;
   text-align: center;
@@ -33,24 +29,25 @@
 
 .game-title {
   display: block;
-  font-size: 80rpx;
-  font-weight: bold;
-  color: white;
-  text-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.5);
-  margin-bottom: 20rpx;
+  font-size: 90rpx;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 4rpx 30rpx rgba(0, 0, 0, 0.6);
+  margin-bottom: 16rpx;
+  letter-spacing: 8rpx;
 }
 
 .game-subtitle {
   display: block;
-  font-size: 32rpx;
-  color: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.5);
+  font-size: 30rpx;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 2rpx 15rpx rgba(0, 0, 0, 0.5);
 }
 
 /* 开始游戏按钮 */
 .start-area {
   position: absolute;
-  top: 50%;
+  bottom: 15%;
   left: 0;
   width: 100%;
   text-align: center;
@@ -58,35 +55,24 @@
 }
 
 .start-btn {
-  width: 400rpx;
-  height: 100rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 50rpx;
+  width: 420rpx;
+  height: 110rpx;
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  border-radius: 55rpx;
   display: flex;
   justify-content: center;
   align-items: center;
   margin: 0 auto;
-  box-shadow: 0 10rpx 40rpx rgba(102, 126, 234, 0.5);
+  box-shadow: 0 12rpx 50rpx rgba(67, 233, 123, 0.5);
+  border: none;
+}
+
+.start-btn::after {
+  border: none;
 }
 
 .btn-text {
-  font-size: 36rpx;
+  font-size: 38rpx;
   font-weight: bold;
-  color: white;
-}
-
-/* 底部提示 */
-.footer-area {
-  position: absolute;
-  bottom: 10%;
-  left: 0;
-  width: 100%;
-  text-align: center;
-  z-index: 10;
-}
-
-.footer-text {
-  font-size: 28rpx;
-  color: rgba(255, 255, 255, 0.8);
-  text-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.5);
+  color: #1a1a2e;
 }
