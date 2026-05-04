@@ -1,9 +1,9 @@
 <!--pages/index/index.wxml-->
 <view class="home">
-  <!-- 视频背景 -->
+  <!-- 视频背景（云存储） -->
   <video
     class="bg-video"
-    src="/static/videos/home-intro.mp4"
+    src="{{videoSrc}}"
     autoplay="{{true}}"
     loop="{{true}}"
     muted="{{true}}"
