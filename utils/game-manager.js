@@ -62,32 +62,39 @@ class GameManager {
    * @param {number} levelId 关卡 ID
    */
   init(levelId) {
-    // 获取关卡 ID（默认每日关卡）
-    const targetLevelId = levelId || this.levelManager.getDailyLevelId();
-    
-    // 开始关卡
-    this.levelManager.startLevel(targetLevelId);
-    const levelConfig = this.levelManager.getCurrentLevel();
-    
-    if (!levelConfig) {
-      console.error('关卡配置不存在');
-      return;
+    try {
+      // 获取关卡 ID（默认第 1 关）
+      const targetLevelId = levelId || 1;
+      
+      // 开始关卡
+      this.levelManager.startLevel(targetLevelId);
+      const levelConfig = this.levelManager.getCurrentLevel();
+      
+      if (!levelConfig) {
+        console.error('关卡配置不存在');
+        return;
+      }
+      
+      // 初始化堆叠布局
+      this.stackManager.initLayers(levelConfig);
+      
+      // 随机生成植物类型
+      this.generateRandomPlants(levelConfig);
+      
+      // 刷新所有植物状态
+      this.stackManager.refreshAllPlants();
+      
+      // 重置游戏状态
+      this.score = 0;
+      this.moves = 0;
+      this.isGameOver = false;
+      this.isPaused = false;
+      
+      console.log('游戏初始化成功，关卡:', targetLevelId);
+    } catch (error) {
+      console.error('游戏初始化失败:', error);
+      throw error;
     }
-    
-    // 初始化堆叠布局
-    this.stackManager.initLayers(levelConfig);
-    
-    // 随机生成植物类型
-    this.generateRandomPlants(levelConfig);
-    
-    // 刷新所有植物状态
-    this.stackManager.refreshAllPlants();
-    
-    // 重置游戏状态
-    this.score = 0;
-    this.moves = 0;
-    this.isGameOver = false;
-    this.isPaused = false;
   }
 
   /**

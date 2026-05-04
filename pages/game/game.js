@@ -39,13 +39,13 @@ Page({
     currentSwipePath: [],
     isSwiping: false,
     
-    // 布局参数（rpx 单位）
-    plantSize: 70,      // 植物大小
-    plantGap: 8,        // 植物间距
-    layerOffset: 10,    // 每层偏移量（实现堆叠效果）
-    gridOffsetX: 20,    // 网格 X 偏移
-    gridOffsetY: 140,   // 网格 Y 偏移
-    slotHeight: 140     // 槽位区域高度
+    // 布局参数（px 单位）
+    plantSize: 60,      // 植物大小 (px)
+    plantGap: 6,        // 植物间距 (px)
+    layerOffset: 8,     // 每层偏移量（实现堆叠效果）(px)
+    gridOffsetX: 15,    // 网格 X 偏移 (px)
+    gridOffsetY: 100,   // 网格 Y 偏移 (px)
+    slotHeight: 120     // 槽位区域高度 (px)
   },
 
   gameManager: null,
@@ -69,7 +69,7 @@ Page({
    * 初始化游戏
    */
   initGame() {
-    wx.showLoading({ title: '加载中...' });
+    console.log('开始初始化游戏...');
     
     try {
       // 初始化游戏
@@ -77,6 +77,8 @@ Page({
       
       // 获取关卡配置
       const levelConfig = this.gameManager.levelManager.getCurrentLevel();
+      
+      console.log('关卡配置:', levelConfig);
       
       // 更新 UI
       this.setData({
@@ -95,10 +97,9 @@ Page({
       // 更新植物数据
       this.updatePlantData();
       
-      wx.hideLoading();
+      console.log('游戏初始化完成');
     } catch (error) {
       console.error('初始化游戏失败:', error);
-      wx.hideLoading();
       wx.showToast({ title: '初始化失败', icon: 'none' });
     }
   },
@@ -184,10 +185,10 @@ Page({
     const y = gridOffsetY + row * (plantSize + plantGap) - layer * layerOffset;
     
     // z-index 确保上层植物显示在下层之上
-    const zIndex = layer * 1000 + row * 10 + col;
+    const zIndex = (layer + 1) * 100;
     
     return {
-      id: `${plant.position.layer}-${plant.position.row}-${plant.position.col}`,
+      id: `${layer}-${row}-${col}`,
       type: plant.type,
       layer: layer,
       row: row,
@@ -207,9 +208,13 @@ Page({
     if (this.data.isGameOver || this.data.isLevelComplete) return;
     
     const touch = event.touches[0];
+    console.log('触摸开始:', touch.clientX, touch.clientY);
+    
     const plant = this.getPlantAtPosition(touch.clientX, touch.clientY);
     
     if (plant && plant.visible) {
+      console.log('选中植物:', plant.id, plant.type);
+      
       this.setData({
         touchStartPos: { x: touch.clientX, y: touch.clientY },
         isSwiping: true,
