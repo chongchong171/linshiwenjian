@@ -2,16 +2,15 @@
 <view class="home">
   <!-- 视频背景 -->
   <video
-    id="homeVideo"
     class="bg-video"
     src="/static/videos/home-intro.mp4"
-    autoplay="true"
-    loop="true"
-    muted="true"
+    autoplay="{{true}}"
+    loop="{{true}}"
+    muted="{{true}}"
     object-fit="cover"
-    show-center-play-btn="false"
-    show-play-btn="false"
-    enable-progress-gesture="false"
+    show-center-play-btn="{{false}}"
+    show-play-btn="{{false}}"
+    enable-progress-gesture="{{false}}"
     binderror="onVideoError"
   />
 
@@ -19,7 +18,7 @@
   <view class="brand">
     <text class="logo">🌿</text>
     <text class="name">绿了个植</text>
-    <text class="sub">滑动消除 · 收集植物</text>
+    <text class="sub">滑动消除 · 植物狂欢</text>
   </view>
 
   <!-- 今日主题 -->
