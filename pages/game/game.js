@@ -1,291 +1,320 @@
 // pages/game/game.js
-const { GameEngine } = require('../../utils/game-engine');
-const app = getApp();
+const GameManager = require('../../utils/game-manager');
+const { PlantType, PlantState, PowerUpType } = require('../../utils/plant-types');
 
 Page({
   data: {
-    currentLevel: 1,
-    currentTheme: 1,
-    themeName: '',
-    cards: [],
+    // 游戏状态
+    score: 0,
+    moves: 0,
+    remainingCount: 0,
     isGameOver: false,
     isLevelComplete: false,
-    isAnimating: false,
-    elapsedTime: 0,
-    moveCount: 0,
-    comboCount: 0,
-    maxCombo: 0,
-    eliminatedCount: 0,
-    totalCards: 0,
-    progress: 0,
-    showFailModal: false,
-    showPassModal: false,
-    failMsg: '',
-    passTime: '',
-    getCard: null,
-    showCombo: false,
-    mode: 'normal',
-    dragCardId: null,
-    dragStartX: 0,
-    dragStartY: 0,
+    currentLevel: 1,
+    themeName: '',
+    
+    // 植物数据
+    plants: [],
+    visiblePlants: [],
+    
+    // UI 状态
+    showGameOver: false,
+    showLevelComplete: false,
+    showPowerUpMenu: false,
+    hintPlants: [],
+    
+    // 道具数量
+    powerUps: {
+      magnifier: 3,
+      weedkiller: 2,
+      shuffle: 1,
+      revive: 1
+    },
+    
+    // 触摸相关
+    touchStartPos: null,
+    currentSwipePath: [],
+    isSwiping: false
   },
 
-  engine: null,
-  comboTimer: null,
+  gameManager: null,
 
   onLoad(options) {
-    this.mode = options.mode || 'normal';
-    this.engine = new GameEngine();
+    // 初始化游戏管理器
+    this.gameManager = new GameManager();
+    
+    // 设置回调函数
     this.setupCallbacks();
+    
+    // 初始化游戏
     this.initGame();
   },
 
-  async initGame() {
+  /**
+   * 初始化游戏
+   */
+  initGame() {
     wx.showLoading({ title: '加载中...' });
+    
     try {
-      const theme = app.getTodayTheme();
-      const level = this.mode === 'daily' ? 2 : 1;
-      await this.engine.init(level, theme);
+      // 初始化游戏
+      this.gameManager.init();
+      
+      // 获取关卡配置
+      const levelConfig = this.gameManager.levelManager.getCurrentLevel();
+      
+      // 更新 UI
       this.setData({
-        currentLevel: level,
-        currentTheme: theme,
-        themeName: this.getThemeName(theme),
+        currentLevel: levelConfig.id,
+        themeName: levelConfig.name,
+        score: 0,
+        moves: 0,
+        remainingCount: this.gameManager.getRemainingCount(),
+        isGameOver: false,
+        isLevelComplete: false,
+        showGameOver: false,
+        showLevelComplete: false
       });
+      
+      // 更新植物数据
+      this.updatePlantData();
+      
       wx.hideLoading();
-    } catch (e) {
-      console.error('初始化游戏失败', e);
+    } catch (error) {
+      console.error('初始化游戏失败:', error);
       wx.hideLoading();
-      wx.showToast({ title: '加载失败', icon: 'none' });
+      wx.showToast({ title: '初始化失败', icon: 'none' });
     }
   },
 
+  /**
+   * 设置回调函数
+   */
   setupCallbacks() {
-    this.engine.onStateChange = (state) => {
-      this.setData({
-        cards: state.cards,
-        isGameOver: state.isGameOver,
-        isLevelComplete: state.isLevelComplete,
-        isAnimating: state.isAnimating,
-        elapsedTime: state.elapsedTime,
-        moveCount: state.moveCount,
-        comboCount: state.comboCount,
-        maxCombo: state.maxCombo,
-        eliminatedCount: state.eliminatedCount,
-        totalCards: state.totalCards,
-        progress: state.progress,
-      });
-    };
-
-    this.engine.onVictory = (passTime) => {
-      this.onVictory(passTime);
-    };
-
-    this.engine.onFailure = () => {
-      this.onFailure();
-    };
-
-    this.engine.onElimination = (cards) => {
-      wx.vibrateShort({ type: 'medium' });
-      if (this.engine.comboCount > 1) {
-        this.showComboEffect(this.engine.comboCount);
+    this.gameManager.setCallbacks({
+      onScoreChange: (score) => {
+        this.setData({ score });
+      },
+      onMovesChange: (moves) => {
+        this.setData({ moves });
+      },
+      onGameOver: (score) => {
+        this.setData({ 
+          isGameOver: true,
+          showGameOver: true 
+        });
+        wx.showToast({ title: '游戏结束', icon: 'none' });
+      },
+      onLevelComplete: (score) => {
+        this.setData({ 
+          isLevelComplete: true,
+          showLevelComplete: true 
+        });
+        wx.showToast({ title: '关卡完成！', icon: 'success' });
+      },
+      onPlantEliminated: (plants) => {
+        this.updatePlantData();
       }
-    };
-  },
-
-  onTouchStart(e) {
-    const cardId = e.currentTarget.dataset.id;
-    const card = this.engine.cards.find(c => c.id === cardId);
-    if (!card || card.status !== 2) return;
-    this.setData({
-      dragCardId: cardId,
-      dragStartX: e.touches[0].clientX,
-      dragStartY: e.touches[0].clientY,
     });
   },
 
-  onTouchEnd(e) {
-    const { dragCardId, dragStartX, dragStartY } = this.data;
-    if (!dragCardId) return;
+  /**
+   * 更新植物数据
+   */
+  updatePlantData() {
+    const visiblePlants = this.gameManager.stackManager.getVisiblePlants();
+    const allPlants = this.getAllPlants();
+    
+    this.setData({
+      plants: allPlants,
+      visiblePlants: visiblePlants.map(p => this.plantToData(p)),
+      remainingCount: this.gameManager.getRemainingCount()
+    });
+  },
 
-    const endX = e.changedTouches[0].clientX;
-    const endY = e.changedTouches[0].clientY;
-    const dx = endX - dragStartX;
-    const dy = endY - dragStartY;
-    const minDrag = 30;
-
-    if (Math.abs(dx) < minDrag && Math.abs(dy) < minDrag) {
-      this.setData({ dragCardId: null });
-      return;
+  /**
+   * 获取所有植物数据
+   */
+  getAllPlants() {
+    const layers = this.gameManager.stackManager.layers;
+    const allPlants = [];
+    
+    for (let layerIndex = 0; layerIndex < layers.length; layerIndex++) {
+      const layer = layers[layerIndex];
+      for (let row = 0; row < layer.length; row++) {
+        for (let col = 0; col < layer[row].length; col++) {
+          const plant = layer[row][col];
+          if (plant.type !== PlantType.NONE) {
+            allPlants.push(this.plantToData(plant));
+          }
+        }
+      }
     }
+    
+    return allPlants;
+  },
 
-    let direction;
-    if (Math.abs(dx) > Math.abs(dy)) {
-      direction = dx > 0 ? 'right' : 'left';
+  /**
+   * 植物数据转换
+   */
+  plantToData(plant) {
+    return {
+      id: `${plant.position.layer}-${plant.position.row}-${plant.position.col}`,
+      type: plant.type,
+      layer: plant.position.layer,
+      row: plant.position.row,
+      col: plant.position.col,
+      visible: plant.visible,
+      state: plant.state
+    };
+  },
+
+  /**
+   * 触摸开始
+   */
+  onTouchStart(event) {
+    if (this.data.isGameOver || this.data.isLevelComplete) return;
+    
+    const touch = event.touches[0];
+    const plant = this.getPlantAtPosition(touch.clientX, touch.clientY);
+    
+    if (plant) {
+      this.setData({
+        touchStartPos: { x: touch.clientX, y: touch.clientY },
+        isSwiping: true,
+        currentSwipePath: [plant]
+      });
+      
+      this.gameManager.startSwipe(this.data.plants.find(p => p.id === plant.id));
+    }
+  },
+
+  /**
+   * 触摸移动
+   */
+  onTouchMove(event) {
+    if (!this.data.isSwiping) return;
+    
+    const touch = event.touches[0];
+    const plant = this.getPlantAtPosition(touch.clientX, touch.clientY);
+    
+    if (plant) {
+      const currentPath = [...this.data.currentSwipePath];
+      if (!currentPath.find(p => p.id === plant.id)) {
+        currentPath.push(plant);
+        this.setData({ currentSwipePath: currentPath });
+        
+        this.gameManager.moveSwipe(this.data.plants.find(p => p.id === plant.id));
+      }
+    }
+  },
+
+  /**
+   * 触摸结束
+   */
+  onTouchEnd(event) {
+    if (!this.data.isSwiping) return;
+    
+    this.gameManager.endSwipe();
+    
+    this.setData({
+      isSwiping: false,
+      currentSwipePath: [],
+      touchStartPos: null
+    });
+  },
+
+  /**
+   * 获取指定位置的植物
+   */
+  getPlantAtPosition(x, y) {
+    // TODO: 根据位置查找对应的植物
+    // 这里需要根据实际 UI 布局实现
+    return null;
+  },
+
+  /**
+   * 使用道具
+   */
+  onUsePowerUp(event) {
+    const type = event.currentTarget.dataset.type;
+    
+    if (this.data.isGameOver || this.data.isLevelComplete) return;
+    
+    const success = this.gameManager.usePowerUp(type);
+    
+    if (success) {
+      // 更新道具数量
+      const powerUps = { ...this.data.powerUps };
+      powerUps[type]--;
+      this.setData({ powerUps });
+      
+      // 更新植物数据
+      this.updatePlantData();
+      
+      wx.showToast({ title: '道具使用成功', icon: 'success' });
     } else {
-      direction = dy > 0 ? 'down' : 'up';
+      wx.showToast({ title: '道具使用失败', icon: 'none' });
     }
-
-    this.engine.onDragTo(dragCardId, direction);
-    this.setData({ dragCardId: null });
   },
 
-  onUseItem(e) {
-    const itemType = e.currentTarget.dataset.type;
-    const useCount = this.getUseCount(itemType);
-    if (useCount >= 1) {
-      wx.showToast({ title: '次数用完了', icon: 'none' });
-      return;
-    }
-    this.executeItem(itemType);
+  /**
+   * 显示道具菜单
+   */
+  onShowPowerUpMenu() {
+    this.setData({ showPowerUpMenu: true });
   },
 
-  executeItem(itemType) {
-    switch (itemType) {
-      case 'magnify':
-        this.useMagnify();
-        break;
-      case 'herbicide':
-        this.useHerbicide();
-        break;
-      case 'shuffle':
-        this.useShuffle();
-        break;
-    }
-    const key = `item_${itemType}`;
-    const count = (wx.getStorageSync(key) || 0) + 1;
-    wx.setStorageSync(key, count);
+  /**
+   * 隐藏道具菜单
+   */
+  onHidePowerUpMenu() {
+    this.setData({ showPowerUpMenu: false });
   },
 
-  useMagnify() {
-    const activeCards = this.engine.getActiveCards();
-    const typeGroups = {};
-    activeCards.forEach(card => {
-      if (!typeGroups[card.type]) typeGroups[card.type] = [];
-      typeGroups[card.type].push(card);
-    });
-    let highlighted = [];
-    for (const cards of Object.values(typeGroups)) {
-      if (cards.length >= 2) {
-        highlighted = highlighted.concat(cards.slice(0, 2));
-        if (highlighted.length >= 6) break;
-      }
-    }
-    this.setData({
-      cards: this.data.cards.map(c => ({
-        ...c,
-        highlighted: highlighted.some(h => h.id === c.id),
-      })),
-    });
-    setTimeout(() => {
-      this.setData({
-        cards: this.data.cards.map(c => ({ ...c, highlighted: false })),
-      });
-    }, 3000);
-  },
-
-  useHerbicide() {
-    const coveredCards = this.engine.cards.filter(c => c.status === 1);
-    const toRemove = coveredCards.slice(0, 3);
-    toRemove.forEach(card => {
-      card.status = 0;
-      this.engine.eliminatedCount++;
-    });
-    this.engine.updateCoverage();
-    this.engine.notifyStateChange();
-  },
-
-  useShuffle() {
-    const activeCards = this.engine.cards.filter(c => c.status !== 0);
-    const types = activeCards.map(c => c.type);
-    for (let i = types.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [types[i], types[j]] = [types[j], types[i]];
-    }
-    activeCards.forEach((card, i) => {
-      card.type = types[i];
-    });
-    this.engine.updateCoverage();
-    this.engine.notifyStateChange();
-  },
-
-  onVictory(passTime) {
-    const stats = app.globalData.stats;
-    stats.totalPass++;
-    stats.totalPlants += this.engine.eliminatedCount;
-    wx.setStorageSync('lglz_stats', stats);
-    const card = this.getPlantCard();
-    this.setData({
-      passTime: this.formatTime(passTime),
-      getCard: card,
-      showPassModal: true,
-    });
-  },
-
-  onFailure() {
-    const msgs = ['就差一点！🌿', '被植物打败了？', '再来一次！', '不服？再来！'];
-    const msg = msgs[Math.floor(Math.random() * msgs.length)];
-    this.setData({ failMsg: msg, showFailModal: true });
-  },
-
+  /**
+   * 重新开始
+   */
   onRestart() {
     this.setData({
-      showFailModal: false,
-      showPassModal: false,
+      showGameOver: false,
+      showLevelComplete: false
     });
-    this.engine.reset();
+    
     this.initGame();
   },
 
-  onBackHome() {
-    wx.switchTab({ url: '/pages/index/index' });
+  /**
+   * 下一关
+   */
+  onNextLevel() {
+    const nextLevel = this.data.currentLevel + 1;
+    
+    if (nextLevel > 4) {
+      wx.showToast({ title: '恭喜通关！', icon: 'success' });
+      return;
+    }
+    
+    this.setData({
+      showLevelComplete: false
+    });
+    
+    this.gameManager.init(nextLevel);
+    this.updatePlantData();
   },
 
+  /**
+   * 分享游戏
+   */
   onShareAppMessage() {
-    const { themeName } = this.data;
     return {
-      title: `${themeName} - 绿了个植，第二关通关率不到 5%，你敢来挑战吗？`,
-      path: '/pages/index/index?share=invite',
+      title: '绿了个植 - 来挑战我的分数！',
+      path: '/pages/game/game'
     };
   },
-
-  getThemeName(themeId) {
-    const names = {
-      1: '多肉花园', 2: '热带雨林', 3: '阳台花卉',
-      4: '中草药圃', 5: '沙漠植物', 6: '水生植物', 7: '盲盒主题',
-    };
-    return names[themeId] || '未知主题';
-  },
-
-  getUseCount(itemType) {
-    return wx.getStorageSync(`item_${itemType}`) || 0;
-  },
-
-  getPlantCard() {
-    const themeConfig = THEME_CONFIGS?.find(t => t.id === this.data.currentTheme);
-    if (!themeConfig) return null;
-    const plant = themeConfig.plantTypes[Math.floor(Math.random() * themeConfig.plantTypes.length)];
-    const rarity = Math.random() < 0.1 ? 3 : Math.random() < 0.4 ? 2 : 1;
-    return { plant, rarity };
-  },
-
-  showComboEffect(combo) {
-    if (this.comboTimer) clearTimeout(this.comboTimer);
-    this.setData({ showCombo: true, comboCount: combo });
-    this.comboTimer = setTimeout(() => {
-      this.setData({ showCombo: false });
-    }, 1000);
-  },
-
-  formatTime(seconds) {
-    const min = Math.floor(seconds / 60);
-    const sec = seconds % 60;
-    return `${min}:${sec.toString().padStart(2, '0')}`;
-  },
-
-  stopProp() {},
 
   onUnload() {
-    if (this.engine) this.engine.stopTimer();
-    if (this.comboTimer) clearTimeout(this.comboTimer);
-  },
+    // 清理资源
+    this.gameManager = null;
+  }
 });

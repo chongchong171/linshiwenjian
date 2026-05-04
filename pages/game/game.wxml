@@ -1,109 +1,103 @@
 <!--pages/game/game.wxml-->
-<view class="game">
-  <!-- 顶部信息（极简） -->
+<view class="game-container">
+  <!-- 顶部信息栏 -->
   <view class="top-bar">
-    <view class="back" bindtap="onBackHome">✕</view>
-    <view class="info-center">
-      <text class="theme">{{themeName}}</text>
-      <text class="level">第{{currentLevel}}关</text>
+    <view class="level-info">
+      <text class="level-name">{{themeName}}</text>
+      <text class="level-id">第{{currentLevel}}关</text>
     </view>
-    <view class="timer">{{formatTime(elapsedTime)}}</text>
-  </view>
-
-  <!-- 游戏牌区 -->
-  <view class="board">
-    <view
-      wx:for="{{cards}}"
-      wx:key="id"
-      class="card {{item.status === 2 ? 'active' : ''}} {{item.status === 1 ? 'covered' : ''}} {{item.highlighted ? 'glow' : ''}} {{item.animating ? 'animating' : ''}}"
-      style="
-        left: {{item.screenPos.x}}px;
-        top: {{item.screenPos.y}}px;
-        z-index: {{100 + item.layer * 20 + item.row * 4 + item.col}};
-        transform: rotate({{item.rotation}}deg);
-      "
-      data-id="{{item.id}}"
-      bindtouchstart="onTouchStart"
-      bindtouchend="onTouchEnd"
-    >
-      <image src="/assets/images/plants/plant_{{item.type}}.png" mode="aspectFit" />
-      <view wx:if="{{item.status === 1}}" class="shade"></view>
+    <view class="score-info">
+      <text class="score-label">分数</text>
+      <text class="score-value">{{score}}</text>
+    </view>
+    <view class="moves-info">
+      <text class="moves-label">步数</text>
+      <text class="moves-value">{{moves}}</text>
     </view>
   </view>
 
-  <!-- 底部收集栏 -->
-  <view class="tray">
-    <view class="tray-label">收集栏</text>
-    <view class="tray-slots">
-      <view wx:for="{{7}}" wx:key="index" class="slot {{item.trayType ? 'filled' : ''}}">
-        <image wx:if="{{item.trayType}}" src="/assets/images/plants/plant_{{item.trayType}}.png" mode="aspectFit" />
+  <!-- 游戏区域 -->
+  <view class="game-area" 
+    bindtouchstart="onTouchStart" 
+    bindtouchmove="onTouchMove" 
+    bindtouchend="onTouchEnd">
+    
+    <!-- 植物网格 -->
+    <view class="plant-grid">
+      <view 
+        wx:for="{{visiblePlants}}" 
+        wx:key="id"
+        class="plant-cell {{item.visible ? 'visible' : 'hidden'}}"
+        data-plant-id="{{item.id}}"
+        style="left: {{item.col * 60 + item.layer * 10}}px; top: {{item.row * 60 + item.layer * 10}}px; z-index: {{item.layer * 100 + item.row * 10 + item.col}}">
+        <image 
+          class="plant-image" 
+          src="/static/plants/plant-{{item.type}}.png" 
+          mode="aspectFit"
+        />
+      </view>
+    </view>
+    
+    <!-- 滑动路径显示 -->
+    <view class="swipe-path" wx:if="{{currentSwipePath.length > 0}}">
+      <view 
+        wx:for="{{currentSwipePath}}" 
+        wx:key="id"
+        class="swipe-point"
+        style="left: {{item.col * 60 + item.layer * 10 + 30}}px; top: {{item.row * 60 + item.layer * 10 + 30}}px">
       </view>
     </view>
   </view>
 
-  <!-- 连击特效 -->
-  <view wx:if="{{showCombo}}" class="combo">
-    <text class="combo-num">{{comboCount}}</text>
-    <text class="combo-text">连消</text>
-  </view>
-
-  <!-- 道具栏 -->
-  <view class="tools">
-    <view class="tool" bindtap="onUseItem" data-type="magnify">
-      <text class="tool-icon">🔍</text>
-      <text class="tool-name">提示</text>
+  <!-- 底部信息栏 -->
+  <view class="bottom-bar">
+    <view class="remaining-info">
+      <text class="remaining-label">剩余</text>
+      <text class="remaining-value">{{remainingCount}}</text>
     </view>
-    <view class="tool" bindtap="onUseItem" data-type="shuffle">
-      <text class="tool-icon">🔀</text>
-      <text class="tool-name">洗牌</text>
-    </view>
-    <view class="tool" bindtap="onUseItem" data-type="herbicide">
-      <text class="tool-icon">💣</text>
-      <text class="tool-name">移除</text>
-    </view>
-  </view>
-
-  <!-- 通关弹窗 -->
-  <view wx:if="{{showPassModal}}" class="overlay" catchtouchmove="stopProp">
-    <view class="modal pass">
-      <text class="modal-emoji">🎉</text>
-      <text class="modal-title">通关！</text>
-      <view class="stats">
-        <view class="stat">
-          <text class="val">{{passTime}}</text>
-          <text class="lbl">用时</text>
-        </view>
-        <view class="stat">
-          <text class="val">{{maxCombo}}</text>
-          <text class="lbl">连消</text>
-        </view>
+    <view class="powerup-bar">
+      <view class="powerup-item" bindtap="onUsePowerUp" data-type="magnifier">
+        <image class="powerup-icon" src="/static/icons/magnifier.png" />
+        <text class="powerup-count">{{powerUps.magnifier}}</text>
       </view>
-      <view wx:if="{{getCard}}" class="reward">
-        <text class="reward-title">获得植物</text>
-        <view class="reward-card {{getCard.rarity === 3 ? 'legendary' : getCard.rarity === 2 ? 'rare' : ''}}">
-          <text class="name">{{getCard.plant}}</text>
-          <text class="tag">{{getCard.rarity === 3 ? '🌟 传说' : getCard.rarity === 2 ? '💎 稀有' : '普通'}}</text>
-        </view>
+      <view class="powerup-item" bindtap="onUsePowerUp" data-type="weedkiller">
+        <image class="powerup-icon" src="/static/icons/weedkiller.png" />
+        <text class="powerup-count">{{powerUps.weedkiller}}</text>
       </view>
-      <view class="btns">
-        <view class="btn primary" bindtap="onRestart">再来一局</view>
-        <view class="btn ghost" bindtap="onBackHome">回首页</view>
+      <view class="powerup-item" bindtap="onUsePowerUp" data-type="shuffle">
+        <image class="powerup-icon" src="/static/icons/shuffle.png" />
+        <text class="powerup-count">{{powerUps.shuffle}}</text>
       </view>
-      <button class="share" open-type="share">分享给好友</button>
+      <view class="powerup-item" bindtap="onUsePowerUp" data-type="revive">
+        <image class="powerup-icon" src="/static/icons/revive.png" />
+        <text class="powerup-count">{{powerUps.revive}}</text>
+      </view>
     </view>
   </view>
 
-  <!-- 失败弹窗 -->
-  <view wx:if="{{showFailModal}}" class="overlay" catchtouchmove="stopProp">
-    <view class="modal fail">
-      <text class="modal-emoji">😭</text>
-      <text class="modal-title">{{failMsg}}</text>
-      <text class="modal-sub">还差 {{totalCards - eliminatedCount}} 株</text>
-      <view class="btns">
-        <view class="btn primary" bindtap="onRestart">重新来</view>
-        <view class="btn ghost" bindtap="onBackHome">回首页</view>
+  <!-- 游戏结束弹窗 -->
+  <view class="modal-overlay" wx:if="{{showGameOver}}">
+    <view class="modal-content game-over-modal">
+      <text class="modal-title">游戏结束</text>
+      <text class="modal-score">得分：{{score}}</text>
+      <text class="modal-moves">步数：{{moves}}</text>
+      <view class="modal-buttons">
+        <button class="btn-restart" bindtap="onRestart">重新开始</button>
+        <button class="btn-share" open-type="share">分享</button>
       </view>
-      <button class="share" open-type="share">分享求助</button>
+    </view>
+  </view>
+
+  <!-- 关卡完成弹窗 -->
+  <view class="modal-overlay" wx:if="{{showLevelComplete}}">
+    <view class="modal-content level-complete-modal">
+      <text class="modal-title">关卡完成！</text>
+      <text class="modal-score">得分：{{score}}</text>
+      <text class="modal-moves">步数：{{moves}}</text>
+      <view class="modal-buttons">
+        <button class="btn-next" bindtap="onNextLevel">下一关</button>
+        <button class="btn-share" open-type="share">分享</button>
+      </view>
     </view>
   </view>
 </view>
