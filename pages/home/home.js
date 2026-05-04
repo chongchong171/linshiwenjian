@@ -24,6 +24,7 @@ Page({
     const fileID = 'cloud://cloud1-3gfc6ow0e18ee828.636c-cloud1-3gfc6ow0e18ee828-1416136067/去水印版.mp4';
     
     console.log('尝试获取云存储视频:', fileID);
+    console.log('当前云环境:', wx.cloud.config ? wx.cloud.config.env : '未初始化');
     
     wx.cloud.getTempFileURL({
       fileList: [fileID],
@@ -32,14 +33,14 @@ Page({
         if (res.fileList && res.fileList.length > 0 && res.fileList[0].tempFileURL) {
           const tempURL = res.fileList[0].tempFileURL;
           this.setData({ videoSrc: tempURL });
-          console.log('视频加载成功:', tempURL);
+          console.log('✅ 视频加载成功:', tempURL);
         } else {
-          console.log('云存储视频不可用，降级使用本地视频');
+          console.log('❌ 云存储返回空结果，降级使用本地视频');
           this.setData({ videoSrc: '/static/videos/home-intro.mp4' });
         }
       },
       fail: err => {
-        console.log('云存储获取失败，降级使用本地视频:', err);
+        console.error('❌ 云存储获取失败，降级使用本地视频:', err);
         this.setData({ videoSrc: '/static/videos/home-intro.mp4' });
       }
     });
