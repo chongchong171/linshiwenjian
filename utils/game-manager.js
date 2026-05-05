@@ -407,6 +407,13 @@ class GameManager {
   reset() {
     this.init();
   }
+
+  /**
+   * 获取剩余植物数量
+   */
+  getRemainingCount() {
+    return this.stackManager.getRemainingCount();
+  }
 }
 
 module.exports = GameManager;
