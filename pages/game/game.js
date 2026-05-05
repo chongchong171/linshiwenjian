@@ -30,7 +30,10 @@ Page({
       weedkiller: 2,
       shuffle: 1,
       revive: 1
-    }
+    },
+    
+    // 暂存植物（移出三张牌）
+    tempPlants: []
   },
 
   gameManager: null,
@@ -69,7 +72,8 @@ Page({
         isLevelComplete: false,
         showGameOver: false,
         showLevelComplete: false,
-        slots: []
+        slots: [],
+        tempPlants: []
       });
       
       this.updatePlantData();
@@ -111,6 +115,9 @@ Page({
       },
       onRemainingChange: (count) => {
         this.setData({ remainingCount: count });
+      },
+      onTempPlantsChange: (tempPlants) => {
+        this.setData({ tempPlants: tempPlants });
       }
     });
   },
@@ -123,7 +130,8 @@ Page({
     
     this.setData({
       plants: allPlants,
-      remainingCount: this.gameManager.getRemainingCount()
+      remainingCount: this.gameManager.getRemainingCount(),
+      tempPlants: this.gameManager.tempRemovedPlants || []
     });
   },
 
@@ -136,9 +144,59 @@ Page({
     const plantId = event.currentTarget.dataset.plantId;
     const plant = this.data.plants.find(p => p.id === plantId);
     
-    if (plant && plant.visible) {
-      console.log('点击植物:', plant.id, '类型:', plant.type);
-      this.gameManager.clickPlant(plant);
+    if (plant) {
+      if (plant.visible) {
+        console.log('点击植物:', plant.id, '类型:', plant.type);
+        this.gameManager.clickPlant(plant);
+        this.updatePlantData();
+      } else {
+        // 被遮挡植物 - 抖动动画
+        this.shakePlant(plantId);
+      }
+    }
+  },
+
+  /**
+   * 植物抖动动画
+   */
+  shakePlant(plantId) {
+    const plants = this.data.plants.map(p => {
+      if (p.id === plantId) {
+        return { ...p, shake: true };
+      }
+      return p;
+    });
+    this.setData({ plants });
+    
+    // 500ms 后移除抖动状态
+    setTimeout(() => {
+      const updatedPlants = this.data.plants.map(p => {
+        if (p.id === plantId) {
+          return { ...p, shake: false };
+        }
+        return p;
+      });
+      this.setData({ plants: updatedPlants });
+    }, 500);
+  },
+
+  /**
+   * 点击暂存的植物（放回卡槽）
+   */
+  onTapTempPlant(event) {
+    if (this.data.isGameOver || this.data.isLevelComplete) return;
+    
+    const index = event.currentTarget.dataset.index;
+    
+    // 从暂存区放回卡槽
+    const tempPlants = [...this.data.tempPlants];
+    const plant = tempPlants[index];
+    
+    if (plant) {
+      this.gameManager.slotManager.insertPlant(plant);
+      tempPlants.splice(index, 1);
+      this.setData({ tempPlants });
+      this.updatePlantData();
     }
   },
 
@@ -148,18 +206,84 @@ Page({
   onUsePowerUp(event) {
     const type = event.currentTarget.dataset.type;
     
-    if (this.data.isGameOver || this.data.isLevelComplete) return;
+    if (this.data.isGameOver && type !== 'revive') return;
+    if (this.data.isLevelComplete) return;
+    
+    const powerUps = { ...this.data.powerUps };
+    
+    if (powerUps[type] <= 0) {
+      wx.showToast({ title: '道具数量不足', icon: 'none' });
+      return;
+    }
     
     const success = this.gameManager.usePowerUp(type);
     
     if (success) {
-      const powerUps = { ...this.data.powerUps };
       powerUps[type]--;
       this.setData({ powerUps });
-      wx.showToast({ title: '道具使用成功', icon: 'success' });
+      
+      // 特殊处理：复活道具
+      if (type === 'revive') {
+        this.setData({ showGameOver: false, isGameOver: false });
+        wx.showToast({ title: '复活成功', icon: 'success' });
+      } else {
+        wx.showToast({ title: '道具使用成功', icon: 'success' });
+      }
+      
+      // 更新 UI
+      this.updatePlantData();
     } else {
-      wx.showToast({ title: '道具数量不足', icon: 'none' });
+      wx.showToast({ title: '道具使用失败', icon: 'none' });
     }
+  },
+
+  /**
+   * 使用道具
+   */
+  onUsePowerUp(event) {
+    const type = event.currentTarget.dataset.type;
+    
+    if (this.data.isGameOver && type !== 'revive') return;
+    if (this.data.isLevelComplete) return;
+    
+    const powerUps = { ...this.data.powerUps };
+    
+    if (powerUps[type] <= 0) {
+      wx.showToast({ title: '道具数量不足', icon: 'none' });
+      return;
+    }
+    
+    const success = this.gameManager.usePowerUp(type);
+    
+    if (success) {
+      powerUps[type]--;
+      this.setData({ powerUps });
+      
+      // 特殊处理：复活道具
+      if (type === 'revive') {
+        this.setData({ showGameOver: false, isGameOver: false });
+        wx.showToast({ title: '复活成功', icon: 'success' });
+      } else {
+        wx.showToast({ title: '道具使用成功', icon: 'success' });
+      }
+      
+      // 更新 UI
+      this.updatePlantData();
+    } else {
+      wx.showToast({ title: '道具使用失败', icon: 'none' });
+    }
+  },
+
+  /**
+   * 点击暂存的植物（放回卡槽）
+   */
+  onTapTempPlant(event) {
+    const index = event.currentTarget.dataset.index;
+    
+    if (this.data.isGameOver || this.data.isLevelComplete) return;
+    
+    this.gameManager.returnTempPlants();
+    this.updatePlantData();
   },
 
   /**

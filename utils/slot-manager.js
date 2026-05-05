@@ -211,6 +211,105 @@ class SlotManager {
     }
     return false;
   }
+
+  /**
+   * 道具：移出三张牌
+   * 将卡槽前 N 张牌移到暂存区（最多 3 张）
+   * @returns {Array} 移出的植物列表
+   */
+  removeTopPlants() {
+    const removeCount = Math.min(3, this.slots.length);
+    if (removeCount === 0) return [];
+
+    const removed = this.slots.slice(0, removeCount);
+    const removedTypes = this.slotTypes.slice(0, removeCount);
+
+    // 从卡槽中删除
+    this.slots.splice(0, removeCount);
+    this.slotTypes.splice(0, removeCount);
+
+    // 触发卡槽变化回调
+    if (this.onSlotChange) {
+      this.onSlotChange(this.slots);
+    }
+
+    return removed;
+  }
+
+  /**
+   * 道具：将暂存的植物放回卡槽
+   * @param {Array} plants 暂存的植物列表
+   */
+  returnPlants(plants) {
+    if (!plants || plants.length === 0) return;
+
+    for (const plant of plants) {
+      // 使用标记位置法插入
+      let markPos = 0;
+      for (let i = 0; i < this.slotTypes.length; i++) {
+        if (this.slotTypes[i] === plant.type) {
+          markPos = i + 1;
+        }
+      }
+
+      let insertPos = markPos > 0 ? markPos : this.slotTypes.length;
+
+      this.slots.splice(insertPos, 0, plant);
+      this.slotTypes.splice(insertPos, 0, plant.type);
+    }
+
+    // 触发卡槽变化回调
+    if (this.onSlotChange) {
+      this.onSlotChange(this.slots);
+    }
+
+    // 检查消除
+    this.checkAndEliminate();
+  }
+
+  /**
+   * 道具：撤回最后一步
+   * @returns {Object|null} 最后插入的植物，如果没有则返回 null
+   */
+  undoLastInsert() {
+    if (this.slots.length === 0) return null;
+
+    // 获取最后插入的植物（卡槽末尾）
+    const lastPlant = this.slots[this.slots.length - 1];
+    
+    // 从卡槽中删除
+    this.slots.pop();
+    this.slotTypes.pop();
+
+    // 触发卡槽变化回调
+    if (this.onSlotChange) {
+      this.onSlotChange(this.slots);
+    }
+
+    return lastPlant;
+  }
+
+  /**
+   * 道具：随机打乱卡槽中的植物
+   */
+  shuffleSlots() {
+    if (this.slots.length <= 1) return;
+
+    // Fisher-Yates 洗牌算法
+    for (let i = this.slots.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [this.slots[i], this.slots[j]] = [this.slots[j], this.slots[i]];
+      [this.slotTypes[i], this.slotTypes[j]] = [this.slotTypes[j], this.slotTypes[i]];
+    }
+
+    // 触发卡槽变化回调
+    if (this.onSlotChange) {
+      this.onSlotChange(this.slots);
+    }
+
+    // 检查消除
+    this.checkAndEliminate();
+  }
 }
 
 module.exports = SlotManager;

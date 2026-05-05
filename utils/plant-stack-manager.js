@@ -181,6 +181,30 @@ class PlantStackManager {
   }
 
   /**
+   * 恢复植物（道具：撤回一步）
+   * 将植物从卡槽放回堆叠区原位
+   */
+  restorePlant(plant) {
+    if (!plant || !plant.position) return false;
+    
+    const { layer, row, col } = plant.position;
+    if (!this.layers[layer] || !this.layers[layer][row]) return false;
+    
+    const targetPlant = this.layers[layer][row][col];
+    if (!targetPlant) return false;
+    
+    // 恢复植物状态
+    targetPlant.type = plant.type;
+    targetPlant.state = PlantState.HIDDEN;
+    targetPlant.visible = false;
+    
+    // 刷新所有植物状态
+    this.refreshAllPlants();
+    
+    return true;
+  }
+
+  /**
    * 获取所有可见植物
    */
   getVisiblePlants() {

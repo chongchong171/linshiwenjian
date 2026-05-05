@@ -44,6 +44,7 @@ class GameManager {
     this.onSlotChange = null;
     this.onRemainingChange = null;
     this.onPlantStateChange = null;
+    this.onTempPlantsChange = null;
   }
 
   /**
@@ -288,37 +289,174 @@ class GameManager {
 
   /**
    * 道具：移出三张牌
+   * 将卡槽前 3 张牌移到暂存区，点击可放回
    */
   useMagnifier() {
-    // TODO: 实现移出三张牌逻辑
-    console.log('使用道具：移出三张牌');
-    return true;
+    if (this.slotManager.getSlotCount() === 0) {
+      console.log('卡槽为空，无法移出');
+      return false;
+    }
+
+    // 从卡槽移出前 3 张牌
+    const removed = this.slotManager.removeTopPlants();
+    
+    if (removed.length > 0) {
+      // 暂存移出的植物
+      this.tempRemovedPlants = removed;
+      
+      // 触发 UI 更新
+      if (this.onTempPlantsChange) {
+        this.onTempPlantsChange(removed);
+      }
+      
+      console.log('移出三张牌成功，数量:', removed.length);
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
+   * 将暂存的植物放回卡槽
+   */
+  returnTempPlants() {
+    if (!this.tempRemovedPlants || this.tempRemovedPlants.length === 0) return;
+
+    this.slotManager.returnPlants(this.tempRemovedPlants);
+    this.tempRemovedPlants = null;
+    
+    // 触发 UI 更新
+    if (this.onTempPlantsChange) {
+      this.onTempPlantsChange([]);
+    }
+    
+    console.log('暂存植物已放回卡槽');
   }
 
   /**
    * 道具：撤回一步
+   * 将最后拾取的牌从卡槽退回原位
    */
   useWeedkiller() {
-    // TODO: 实现撤回一步逻辑
-    console.log('使用道具：撤回一步');
-    return true;
+    // 获取最后插入的植物
+    const lastPlant = this.slotManager.undoLastInsert();
+    
+    if (lastPlant) {
+      // 将植物放回堆叠区
+      this.stackManager.restorePlant(lastPlant);
+      this.stackManager.refreshAllPlants();
+      
+      // 触发 UI 更新
+      if (this.onSlotChange) {
+        this.onSlotChange(this.slotManager.getSlots());
+      }
+      
+      console.log('撤回一步成功，类型:', lastPlant.type);
+      return true;
+    }
+    
+    console.log('卡槽为空，无法撤回');
+    return false;
   }
 
   /**
    * 道具：随机打乱
+   * 随机打乱所有剩余牌位置（堆叠区 + 卡槽区）
    */
   useShuffle() {
-    // TODO: 实现随机打乱逻辑
-    console.log('使用道具：随机打乱');
+    // 打乱卡槽中的植物
+    this.slotManager.shuffleSlots();
+    
+    // 打乱堆叠区植物位置
+    this.shuffleStackPlants();
+    
+    // 触发 UI 更新
+    if (this.onSlotChange) {
+      this.onSlotChange(this.slotManager.getSlots());
+    }
+    
+    console.log('随机打乱成功');
     return true;
   }
 
   /**
+   * 打乱堆叠区植物位置
+   */
+  shuffleStackPlants() {
+    const allPlants = [];
+    const positions = [];
+    
+    // 收集所有植物和位置
+    for (let layerIndex = 0; layerIndex < this.stackManager.layers.length; layerIndex++) {
+      const layer = this.stackManager.layers[layerIndex];
+      for (let row = 0; row < layer.length; row++) {
+        for (let col = 0; col < layer[row].length; col++) {
+          const plant = layer[row][col];
+          if (plant.type !== PlantType.NONE) {
+            allPlants.push({
+              type: plant.type,
+              position: { ...plant.position },
+              state: plant.state,
+              visible: plant.visible
+            });
+            positions.push({ layer: layerIndex, row, col });
+          }
+        }
+      }
+    }
+    
+    // 随机打乱植物数组
+    this.shuffleArray(allPlants);
+    
+    // 重新分配位置
+    for (let i = 0; i < allPlants.length; i++) {
+      const pos = positions[i];
+      const plant = allPlants[i];
+      
+      if (this.stackManager.layers[pos.layer] && 
+          this.stackManager.layers[pos.layer][pos.row] && 
+          this.stackManager.layers[pos.layer][pos.row][pos.col]) {
+        
+        const targetPlant = this.stackManager.layers[pos.layer][pos.row][pos.col];
+        targetPlant.type = plant.type;
+        targetPlant.position = pos;
+        targetPlant.state = PlantState.HIDDEN;
+        targetPlant.visible = false;
+      }
+    }
+    
+    // 刷新所有植物状态
+    this.stackManager.refreshAllPlants();
+  }
+
+  /**
    * 道具：复活
+   * 游戏结束后继续
    */
   useRevive() {
-    // TODO: 实现复活逻辑
-    console.log('使用道具：复活');
+    if (!this.isGameOver) {
+      console.log('游戏未结束，无法复活');
+      return false;
+    }
+
+    // 重置游戏结束状态
+    this.isGameOver = false;
+    
+    // 清空卡槽
+    this.slotManager.init();
+    
+    // 刷新所有植物状态
+    this.stackManager.refreshAllPlants();
+    
+    // 触发 UI 更新
+    if (this.onSlotChange) {
+      this.onSlotChange(this.slotManager.getSlots());
+    }
+    if (this.onRemainingChange) {
+      this.onRemainingChange(this.stackManager.getRemainingCount());
+    }
+    
+    console.log('复活成功，游戏继续');
     return true;
   }
 
@@ -385,6 +523,7 @@ class GameManager {
     this.onSlotChange = callbacks.onSlotChange || null;
     this.onRemainingChange = callbacks.onRemainingChange || null;
     this.onPlantStateChange = callbacks.onPlantStateChange || null;
+    this.onTempPlantsChange = callbacks.onTempPlantsChange || null;
   }
 
   /**
