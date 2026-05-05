@@ -3,8 +3,8 @@ App({
   globalData: {
     // 游戏版本
     version: '1.0.0',
-    // 云环境 ID（复用 AI 植物管家）
-    cloudEnv: 'plant-encyclopedia-8d9x10139590b',
+    // 云环境 ID（绿了个植的云环境）
+    cloudEnv: 'cloud1-3gfc6ow0e18ee828',
     // 用户数据
     userId: '',
     // 游戏统计
