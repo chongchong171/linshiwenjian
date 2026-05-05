@@ -1,7 +1,7 @@
 // pages/home/home.js
 Page({
   data: {
-    videoSrc: 'cloud://cloud1-3gfc6ow0e18ee828.636c-cloud1-3gfc6ow0e18ee828-1416136067/去水印版.mp4' // 默认云存储
+    videoSrc: 'cloud://cloud1-3gfc6ow0e18ee828.636c-cloud1-3gfc6ow0e18ee828-1416136067/压缩大小后的视频.mp4' // 默认云存储
   },
 
   onLoad() {
@@ -21,7 +21,7 @@ Page({
    * 从云存储获取视频
    */
   getVideoFromCloud() {
-    const fileID = 'cloud://cloud1-3gfc6ow0e18ee828.636c-cloud1-3gfc6ow0e18ee828-1416136067/去水印版.mp4';
+    const fileID = 'cloud://cloud1-3gfc6ow0e18ee828.636c-cloud1-3gfc6ow0e18ee828-1416136067/压缩大小后的视频.mp4';
     
     console.log('尝试获取云存储视频:', fileID);
     console.log('当前云环境:', wx.cloud.config ? wx.cloud.config.env : '未初始化');
